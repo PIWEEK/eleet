@@ -1,10 +1,13 @@
 import './style.css'
 import { Game } from '@taoro/game'
 import { InputDevice, InputKind } from '@taoro/input'
+// import { Audio3D } from '@taoro/audio-3d'
 import { CustomRenderer } from './src/engine/CustomRenderer'
 import { Player } from './src/game/entities/Player'
 import { StarSystem } from './src/game/entities/StarSystem'
 import { StellarForge } from './src/game/models/StellarForge'
+import CustomCollider from './src/engine/CustomCollider'
+import { Asteroid } from './src/game/entities/Asteroid'
 
 class ConfigParams {
   #url = null
@@ -42,7 +45,13 @@ async function start() {
 
   const canvas = document.querySelector('canvas')
   const game = new Game(canvas)
+
+  await game.resources.load('models/asteroide-peque.blend.json')
+
+  // const audio3D = new Audio3D(game.audio)
   const customRenderer = new CustomRenderer(canvas)
+  const customCollider = new CustomCollider()
+  game.pipeline.unshift(() => customCollider.update())
   game.pipeline.push(() => customRenderer.update())
   game.input.setBindings(0, (state) => {
     if (state.index === 0) {
@@ -64,6 +73,20 @@ async function start() {
           ],
         ],
         [
+          'yaw-left',
+          [
+            [InputDevice.KEYBOARD, ['KeyQ']],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 2, -1]],
+          ],
+        ],
+        [
+          'yaw-right',
+          [
+            [InputDevice.KEYBOARD, ['KeyE']],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 2, 1]],
+          ],
+        ],
+        [
           'roll-left',
           [
             [InputDevice.KEYBOARD, ['ArrowLeft']],
@@ -81,27 +104,42 @@ async function start() {
           'throttle-up',
           [
             [InputDevice.KEYBOARD, ['KeyA']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, -1]],
+            [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 4]],
           ],
         ],
         [
           'throttle-down',
           [
             [InputDevice.KEYBOARD, ['KeyD']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, 1]],
+            [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 5]],
           ],
         ],
         [
-          'fire',
+          'target',
           [
-            [InputDevice.KEYBOARD, ['Space']],
+            [InputDevice.KEYBOARD, ['KeyT']],
             [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 0]],
+          ],
+        ],
+        [
+          'primary-fire',
+          [
+            [InputDevice.KEYBOARD, ['KeyZ']],
+            [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 7]],
+          ],
+        ],
+        [
+          'secondary-fire',
+          [
+            [InputDevice.KEYBOARD, ['KeyX']],
+            [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 6]],
           ],
         ],
       ]
     }
   })
 
+  game.scheduler.add(Asteroid(game))
   game.scheduler.add(StarSystem(game, star))
   game.scheduler.add(Player(game))
   game.start()

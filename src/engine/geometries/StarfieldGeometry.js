@@ -1,8 +1,15 @@
 import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-lcg'
+import WebGL from '@taoro/webgl'
 
+/**
+ * FIXME: Esto también podría renderizarlo utilizando
+ * sólo shaders.
+ */
 export class StarfieldGeometry {
   #vertices = null
+  #buffer = null
+  #vao = null
 
   constructor(options) {
     const seed = options?.seed || 0
@@ -20,7 +27,32 @@ export class StarfieldGeometry {
     this.#vertices = new Float32Array(vertices)
   }
 
+  get hasVertexArrayObject() {
+    return !!this.#vao
+  }
+
+  createVertexArrayObject(gl) {
+    this.#buffer = WebGL.buffer.createArrayBufferFrom(
+      gl,
+      this.#vertices
+    )
+
+    this.#vao = WebGL.vao.createVertexArray(gl, {
+      attributes: [
+        { index: 0, size: 4, type: gl.FLOAT, buffer: this.#buffer },
+      ],
+    })
+  }
+
   get vertices() {
     return this.#vertices
+  }
+
+  get buffer() {
+    return this.#buffer
+  }
+
+  get vao() {
+    return this.#vao
   }
 }

@@ -6,7 +6,9 @@ import { OrbitBody } from './OrbitBody'
 
 // Radio del sol: 696.340.000 metros
 // Radio de mercurio: 2.440.000 metros
+// Distancia mercurio: 58.000.000.000 metros
 // Radio de venus: 6.051.000 metros
+// Distancia venus: 108.000.000.000 metros
 // Radio de la tierra: 6.371.000 metros
 // Radio de la luna: 1.737.000 metros
 // Radio de ceres: 473.000 metros
@@ -18,15 +20,16 @@ import { OrbitBody } from './OrbitBody'
 // Radio de pluton: 1.188.300 metros
 // UA: 149.597.870.700 metros
 
-// Unidad Astronómica
-const AU = 149.597
-
 /**
  * Forja estelar.
  *
  * Cuando le pasamos una semilla, genera un sistema estelar.
  */
 export class StellarForge {
+  // Unidad Astronómica
+  static AU = 149.597
+  static ORBIT_DISTANCE = 50.00
+
   /**
    * Constructor
    *
@@ -40,12 +43,12 @@ export class StellarForge {
       radius: random.between(0.5, 1.5)
     })
     const numOrbits = random.intBetween(5, 9)
-    for (let orbitIndex = 1; orbitIndex <= numOrbits; orbitIndex++) {
+    for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
       const orbit = new Orbit({
         body: star,
         semiMajorAxis: random.between(
-          AU * (orbitIndex - 0.5),
-          AU * (orbitIndex + 0.5)
+          StellarForge.ORBIT_DISTANCE * (orbitIndex - 0.5),
+          StellarForge.ORBIT_DISTANCE * (orbitIndex + 0.5)
         ),
         eccentricity: 0,
       })

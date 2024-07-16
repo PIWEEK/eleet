@@ -2,9 +2,9 @@
 
 precision highp float;
 
-in float v_alpha;
+uniform vec4 u_color;
 out vec4 o_fragColor;
 
 void main() {
-  o_fragColor = vec4(v_alpha, v_alpha, v_alpha, v_alpha);
+  o_fragColor = u_color;
 }

@@ -47,6 +47,35 @@ export class GeometryComponent extends Component {
   }
 }
 
+export class MeshComponent extends Component {
+  #geometry = null
+  #indexBuffer = null
+  #vertexBuffer = null
+  #edgeBuffer = null
+
+  constructor(id, geometry) {
+    super(id)
+    this.#geometry = geometry
+  }
+
+  get geometry() {
+    return this.#geometry
+  }
+
+  get indexBuffer() {
+    return this.#indexBuffer
+  }
+
+  get vertexBuffer() {
+    return this.#vertexBuffer
+  }
+
+  get edgeBuffer() {
+    return this.#edgeBuffer
+  }
+
+}
+
 export class DustComponent extends Component {
   constructor(id) {
     super(id)
@@ -243,19 +272,8 @@ export class CustomRenderer {
    * @param {StarfieldComponent} starfield
    */
   #renderStarfield(gl, camera, cameraTransform, starfield) {
-    if (!starfield.buffer) {
-      starfield.buffer = WebGL.buffer.createArrayBufferFrom(
-        gl,
-        starfield.geometry.vertices
-      )
-    }
-
-    if (!starfield.vao) {
-      starfield.vao = WebGL.vao.createVertexArray(gl, {
-        attributes: [
-          { index: 0, size: 4, type: gl.FLOAT, buffer: starfield.buffer },
-        ],
-      })
+    if (!starfield.geometry.hasVertexArrayObject) {
+      starfield.geometry.createVertexArrayObject(gl)
     }
 
     gl.uniformMatrix4fv(
@@ -267,7 +285,7 @@ export class CustomRenderer {
       this.#sfModelViewProjection.rawData
     )
 
-    gl.bindVertexArray(starfield.vao)
+    gl.bindVertexArray(starfield.geometry.vao)
     gl.drawArrays(gl.POINTS, 0, 1000)
     gl.bindVertexArray(null)
   }
@@ -383,8 +401,57 @@ export class CustomRenderer {
     }
   }
 
+  /**
+   * Renderiza el polvo utilizando puntos.
+   *
+   * @param {WebGL2RenderingContext} gl
+   * @param {CameraComponent} camera
+   * @param {TransformComponent} cameraTransform
+   * @param {DustComponent} dust
+   */
   #renderDust(gl, camera, cameraTransform, dust) {
-    gl.drawArrays(gl.POINTS, 0, 1000)
+    gl.drawArrays(gl.POINTS, 0, 2700)
+  }
+
+  #renderMeshSolid(gl, camera, cameraTransform, mesh) {
+    gl.uniform4f(gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'), 0.0, 0.0, 0.0, 1.0)
+    gl.bindVertexArray(mesh.geometry.triangleVertexArrayObject)
+    gl.drawElements(gl.TRIANGLES, mesh.geometry.triangles.length, gl.UNSIGNED_SHORT, 0)
+    gl.bindVertexArray(null)
+  }
+
+  #renderMeshLines(gl, camera, cameraTransform, mesh) {
+    gl.uniform4f(gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'), 1.0, 1.0, 1.0, 1.0)
+    gl.bindVertexArray(mesh.geometry.edgeVertexArrayObject)
+    gl.drawElements(gl.LINES, mesh.geometry.edges.length, gl.UNSIGNED_SHORT, 0)
+    gl.bindVertexArray(null)
+  }
+
+  #renderMesh(gl, camera, cameraTransform, mesh) {
+    if (!mesh.geometry.hasVertexArrayObject) {
+      mesh.geometry.createVertexArrayObject(gl)
+    }
+
+    this.#model.identity()
+
+    Matrix4.multiply(this.#modelView, this.#view, this.#model)
+    Matrix4.multiply(
+      this.#modelViewProjection,
+      camera.projection.matrix,
+      this.#modelView
+    )
+
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(
+        this.#programs.get('mesh'),
+        'u_modelViewProjection'
+      ),
+      false,
+      this.#modelViewProjection.rawData
+    )
+
+    this.#renderMeshSolid(gl, camera, cameraTransform, mesh)
+    this.#renderMeshLines(gl, camera, cameraTransform, mesh)
   }
 
   /**
@@ -398,12 +465,22 @@ export class CustomRenderer {
    * @param {TransformComponent} cameraTransform
    */
   #renderSmallScale(gl, camera, cameraTransform) {
-    gl.clearDepth(1)
+    gl.clear(gl.DEPTH_BUFFER_BIT)
     // TODO: Tengo que ver cómo hago el render de todo esto.
+    const meshes = Component.findByConstructor(MeshComponent)
+    if (meshes) {
+      gl.useProgram(this.#programs.get('mesh'))
+      for (const mesh of meshes) {
+        this.#renderMesh(gl, camera, cameraTransform, mesh)
+      }
+    }
 
     const dusts = Component.findByConstructor(DustComponent)
     if (dusts) {
-      gl.clearDepth(1)
+      gl.clear(gl.DEPTH_BUFFER_BIT)
+      gl.enable(gl.BLEND)
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
       gl.useProgram(this.#programs.get('dust'))
 
       this.#model.identity()
@@ -436,6 +513,7 @@ export class CustomRenderer {
       for (const dust of dusts) {
         this.#renderDust(gl, camera, cameraTransform, dust)
       }
+      gl.disable(gl.BLEND)
     }
   }
 

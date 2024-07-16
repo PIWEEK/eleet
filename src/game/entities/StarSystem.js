@@ -5,8 +5,8 @@ import { Matrix4 } from '@taoro/math-matrix4'
 
 export function * StarSystem(game, star) {
   const starfield = new StarfieldComponent('starfield', new StarfieldGeometry(star.seed))
-  const imposterStar = new ImposterComponent('imposter_star', star)
-  new TransformComponent('imposter_star')
+  // const imposterStar = new ImposterComponent('imposter_star', star)
+  // new TransformComponent('imposter_star')
 
   const dustComponent = new DustComponent('dust')
 
