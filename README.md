@@ -4,12 +4,14 @@
 
 ```sh
 git clone https://github.com/azazeln28/taoro
+cd taoro
 git checkout develop
 corepack enable pnpm
 pnpm run link:all
 ```
 
 ```sh
+cd ..
 pnpm link --global @taoro/component
 pnpm link --global @taoro/component-transform-3d
 pnpm link --global @taoro/game
