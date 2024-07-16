@@ -1,53 +1,69 @@
 import bpy
-import os
+import json
+import sys
 
-#
-# Obtenemos la ruta base donde está guardado el
-# archivo .blend
-#
-basedir = os.path.dirname(bpy.data.filepath)
+# Call the script with something like
+# blender --background --python scripts/export.py -- models/basic-ship.blend
+argv = sys.argv
+argv = argv[argv.index("--") + 1:]  # get all args after "--"
 
-if not basedir:
-    raise Exception("Blend file is not saved")
+if len(argv) < 1:
+    raise Exception("Blend file not specified")
 
-#
-# Nombre del modelo a exportar.
-# TODO: Esto se podría extraer del nombre del archivo .blend
-#
-name = "model.txt"
+input_path = argv[0]
+output_path = argv[0] + ".json"
 
-#
-# Abrimos el archivo para escritura.
-# TODO: Podriamos detectar si el archivo ya existe y si existe entonces
-# podríamos añadirle una extension al final o la fecha.
-#
-f = open(os.path.join(basedir, name), "w")
+bpy.ops.wm.open_mainfile(filepath=input_path)
 
-#
 # Iteramos por todas las mallas que haya
 # dentro del archivo y exportamos sus coordenadas
-# en un archivico de texto.
-#
+# en un archivico de json.
+meshes = []
 for mesh in bpy.data.meshes:
-    f.write("# {}\n".format(mesh.name))
+    vertices = []
     for vertex in mesh.vertices:
-        f.write("v {}: {}, {}, {}\n".format(vertex.index, vertex.co[0], vertex.co[1], vertex.co[2]))
-    for triangle in mesh.loop_triangles:
-        f.write("t {}: {}, {}, {}\n".format(triangle.index, triangle.vertices[0], triangle.vertices[1], triangle.vertices[2]))
-    for edge in mesh.edges:
-        f.write("e {}: {}, {}\n".format(edge.index, edge.vertices[0], edge.vertices[1]))
+        vertices.extend(list(vertex.co))
 
-#
+    triangles = []
+    for triangle in mesh.loop_triangles:
+        triangles.extend(list(triangle.vertices))
+
+    edges = []
+    for edge in mesh.edges:
+        edges.extend(list(edge.vertices))
+
+    meshes.append({
+      "name": "# {}".format(mesh.name),
+      "vertices": vertices,
+      "triangles": triangles,
+      "edges": edges
+    })
+
 # Iteramos por todos los objetos que hay en la escena
 # para encontrar aquellos que representan posiciones
 # especiales dentro de la malla.
-#
-for obj in bpy.data.objects:
-    if (obj.name.startswith("hp_")):
-        f.write("# hard point {}\n".format(obj.name))
-        f.write("{}: {} {} {}\n".format(obj.name, obj.location[0], obj.location[1], obj.location[2]))
 
-#
-# Cerramos el archivo
-#
-f.close()
+objects = []
+for obj in bpy.data.objects:
+  print("---", obj.name, obj.name, list(obj.location))
+  objects.append({
+      "name": "# {}".format(obj.name),
+      "is_hard_point": obj.name.startswith("hp_"),
+      "location": list(obj.location)
+    })
+
+# Data to be written
+dictionary = {
+    "meshes": meshes,
+    "objects": objects
+}
+
+# Serializing json
+json_object = json.dumps(dictionary, indent=4)
+
+# TODO: Podriamos detectar si el archivo ya existe y si existe entonces
+# podríamos añadirle una extension al final o la fecha.
+
+# Writing output
+with open(output_path, "w") as outfile:
+    outfile.write(json_object)
