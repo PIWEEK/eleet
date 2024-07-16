@@ -1,11 +1,12 @@
 import { Body } from './Body'
 import { Orbit } from './Orbit'
+import { Zone } from './Zone'
 
-export class OrbitBody {
+export class OrbitContent {
   /**
-   * @type {Body}
+   * @type {(Body | Zone)}
    */
-  #body = null
+  #content = null
 
   /**
    * @type {Orbit}
@@ -28,12 +29,12 @@ export class OrbitBody {
    */
   constructor(options) {
     this.#orbit = options?.orbit
-    this.#body = options?.body
+    this.#content = options?.content
     this.#trueAnomaly = options?.trueAnomaly
   }
 
-  get body() {
-    return this.#body
+  get content() {
+    return this.#content
   }
 
   get orbit() {
@@ -57,4 +58,4 @@ export class OrbitBody {
   }
 }
 
-export default OrbitBody
+export default OrbitContent

@@ -72,7 +72,7 @@ export class Orbit {
    *
    * @type {Array<Body>}
    */
-  #orbitBodies = new Array()
+  #orbitObjects = new Array()
 
   /**
    * Constructor
@@ -145,8 +145,8 @@ export class Orbit {
    *
    * @type {Array<OrbiyBody>}
    */
-  get orbitBodies() {
-    return this.#orbitBodies
+  get orbitObjects() {
+    return this.#orbitObjects
   }
 }
 

@@ -2,7 +2,8 @@ import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-lcg'
 import { Body } from './Body'
 import { Orbit } from './Orbit'
-import { OrbitBody } from './OrbitBody'
+import { OrbitContent } from './OrbitContent'
+import { Zone } from './Zone'
 
 // Radio del sol: 696.340.000 metros
 // Radio de mercurio: 2.440.000 metros
@@ -52,16 +53,24 @@ export class StellarForge {
         ),
         eccentricity: 0,
       })
-      orbit.orbitBodies.push(
-        new OrbitBody({
+
+      const orbitType = random.between(0, 1) > 0.5 ? 'body': 'zone'
+      orbit.orbitObjects.push(
+        new OrbitContent({
           orbit: orbit,
-          body: new Body({
-            seed: random.seed,
-            // Devuelve un planeta entre el tamaño de mercurio
-            // y el tamaño de jupiter.
-            radius: random.between(0.1, 0.6),
-          }),
-          trueAnomaly: random.angle(),
+          type: orbitType,
+          content: (orbitType == 'body') ?
+            new Body({
+              seed: random.seed,
+              // Devuelve un planeta entre el tamaño de mercurio
+              // y el tamaño de jupiter.
+              radius: random.between(0.1, 0.6),
+            })
+            : 
+            new Zone({
+              seed: random.seed,
+            }),
+          trueAnomaly: random.angle()
         })
       )
       star.orbits.push(orbit)
