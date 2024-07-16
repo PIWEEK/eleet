@@ -144,8 +144,10 @@ export class TransformComponent extends Component {
   #largeScalePosition = new Vector3()
   #smallScalePosition = new Vector3()
 
-  constructor(id) {
+  constructor(id, options) {
     super(id)
+    this.#largeScalePosition = options?.largeScalePosition ?? new Vector3()
+    this.#smallScalePosition = options?.smallScalePosition ?? new Vector3()
   }
 
   get positionMatrix() {

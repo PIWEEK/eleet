@@ -1,5 +1,6 @@
 import { Matrix4 } from '@taoro/math-matrix4'
 import { Vector3 } from '@taoro/math-vector3'
+import { SphereColliderComponent } from '../../engine/CustomCollider'
 import { CameraComponent, TransformComponent } from '../../engine/CustomRenderer'
 
 /**
@@ -13,11 +14,13 @@ export function * Player(game) {
   // y las coordenadas "small scale.".
   const transform = new TransformComponent('player')
   const camera = new CameraComponent('player')
+  const collider = new SphereColliderComponent('player', {
+    radius: 0.5
+  })
 
   const FORWARD = new Vector3(Float32Array, 0, 0, 1)
   const UP = new Vector3(Float32Array, 0, 1, 0)
 
-  const position = new Vector3()
   const velocity = new Vector3()
   const forward = new Vector3(Float32Array, 0, 0, 1)
   const up = new Vector3(Float32Array, 0, 1, 0)
@@ -50,6 +53,10 @@ export function * Player(game) {
   let rotateZ = 0
 
   while (true) {
+    if (collider.collisions.size > 0) {
+      console.log('CHOCÓ!')
+    }
+
     if (game.input.stateOf(0, 'throttle-up')) {
       linearVelocity.z += linearAcceleration.z
     } else if (game.input.stateOf(0, 'throttle-down')) {
@@ -96,10 +103,10 @@ export function * Player(game) {
     Vector3.transform(up, UP, transform.rotationMatrix)
 
     velocity.copy(forward).scale(linearVelocity.z)
-    position.add(velocity)
+    transform.largeScalePosition.add(velocity)
 
     Matrix4.identity(transform.positionMatrix)
-    Matrix4.translate(transform.positionMatrix, transform.positionMatrix, position)
+    Matrix4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
 
     Matrix4.identity(transform.matrix)
     Matrix4.multiply(transform.matrix, transform.matrix, transform.positionMatrix)

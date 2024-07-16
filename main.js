@@ -139,7 +139,7 @@ async function start() {
     }
   })
 
-  game.scheduler.add(Asteroid(game))
+  // game.scheduler.add(Asteroid(game))
   game.scheduler.add(StarSystem(game, star))
   game.scheduler.add(Player(game))
   game.start()

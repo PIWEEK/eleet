@@ -1,12 +1,16 @@
 import Vector3 from '@taoro/math-vector3'
 import { DustComponent, ImposterComponent, OrbitComponent, StarfieldComponent, TransformComponent } from '../../engine/CustomRenderer'
+import { SphereColliderComponent } from '../../engine/CustomCollider'
 import { StarfieldGeometry } from '../../engine/geometries/StarfieldGeometry'
 import { Matrix4 } from '@taoro/math-matrix4'
 
 export function * StarSystem(game, star) {
   const starfield = new StarfieldComponent('starfield', new StarfieldGeometry(star.seed))
-  // const imposterStar = new ImposterComponent('imposter_star', star)
-  // new TransformComponent('imposter_star')
+  const imposterStar = new ImposterComponent('imposter_star', star)
+  const transformStar = new TransformComponent('imposter_star')
+  const colliderStar = new SphereColliderComponent('imposter_star', {
+    radius: star.radius * 1.5
+  })
 
   const dustComponent = new DustComponent('dust')
 
@@ -19,17 +23,18 @@ export function * StarSystem(game, star) {
       const orbitBody = orbit.orbitBodies[orbitBodyIndex]
       console.log('suborbits', orbit, orbitBody, orbitBodyIndex)
       const bodyComponent = new ImposterComponent(`imposter_${orbitIndex}_${orbitBodyIndex}`, orbitBody.body)
-      const transformComponent = new TransformComponent(`imposter_${orbitIndex}_${orbitBodyIndex}`)
-      const position = new Vector3(
-        Float32Array,
-        orbitBody.x,
-        orbitBody.y,
-        orbitBody.z
-      )
+      const transformComponent = new TransformComponent(`imposter_${orbitIndex}_${orbitBodyIndex}`, {
+        largeScalePosition: new Vector3(
+          Float32Array,
+          orbitBody.x,
+          orbitBody.y,
+          orbitBody.z
+        )
+      })
       Matrix4.translate(
         transformComponent.matrix,
         transformComponent.positionMatrix,
-        position
+        transformComponent.largeScalePosition
       )
     }
   }
