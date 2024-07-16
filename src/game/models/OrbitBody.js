@@ -1,3 +1,6 @@
+import { Body } from './Body'
+import { Orbit } from './Orbit'
+
 export class OrbitBody {
   /**
    * @type {Body}
@@ -39,6 +42,18 @@ export class OrbitBody {
 
   get trueAnomaly() {
     return this.#trueAnomaly
+  }
+
+  get x() {
+    return Math.cos(this.#trueAnomaly) * this.#orbit.semiMajorAxis
+  }
+
+  get y() {
+    return 0
+  }
+
+  get z() {
+    return Math.sin(this.#trueAnomaly) * this.#orbit.semiMinorAxis
   }
 }
 

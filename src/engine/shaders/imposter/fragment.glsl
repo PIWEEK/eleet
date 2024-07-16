@@ -10,5 +10,5 @@ void main() {
     discard;
   }
 
-  o_fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  o_fragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }

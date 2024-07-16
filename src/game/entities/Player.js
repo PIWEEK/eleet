@@ -43,12 +43,13 @@ export function * Player(game) {
     0,
   )
 
+  let flightMode = 'large-scale'
+
   let rotateX = 0
   let rotateY = 0
   let rotateZ = 0
 
   while (true) {
-
     if (game.input.stateOf(0, 'throttle-up')) {
       linearVelocity.z += linearAcceleration.z
     } else if (game.input.stateOf(0, 'throttle-down')) {

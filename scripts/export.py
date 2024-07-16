@@ -9,12 +9,12 @@ basedir = os.path.dirname(bpy.data.filepath)
 
 if not basedir:
     raise Exception("Blend file is not saved")
-    
+
 #
 # Nombre del modelo a exportar.
 # TODO: Esto se podría extraer del nombre del archivo .blend
 #
-name = "model.txt" 
+name = "model.txt"
 
 #
 # Abrimos el archivo para escritura.
@@ -33,7 +33,7 @@ for mesh in bpy.data.meshes:
     for vertex in mesh.vertices:
         f.write("v {}: {}, {}, {}\n".format(vertex.index, vertex.co[0], vertex.co[1], vertex.co[2]))
     for triangle in mesh.loop_triangles:
-        f.write("f {}: {}, {}, {}\n".format(triangle.index, triangle.vertices[0], triangle.vertices[1], triangle.vertices[2]))
+        f.write("t {}: {}, {}, {}\n".format(triangle.index, triangle.vertices[0], triangle.vertices[1], triangle.vertices[2]))
     for edge in mesh.edges:
         f.write("e {}: {}, {}\n".format(edge.index, edge.vertices[0], edge.vertices[1]))
 

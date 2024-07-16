@@ -67,28 +67,28 @@ async function start() {
           'roll-left',
           [
             [InputDevice.KEYBOARD, ['ArrowLeft']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, -1]],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 0, -1]],
           ],
         ],
         [
           'roll-right',
           [
             [InputDevice.KEYBOARD, ['ArrowRight']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, 1]],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 0, 1]],
           ],
         ],
         [
           'throttle-up',
           [
             [InputDevice.KEYBOARD, ['KeyA']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 0, -1]],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, -1]],
           ],
         ],
         [
           'throttle-down',
           [
             [InputDevice.KEYBOARD, ['KeyD']],
-            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 0, 1]],
+            [InputDevice.GAMEPAD, [0, InputKind.AXIS, 3, 1]],
           ],
         ],
         [

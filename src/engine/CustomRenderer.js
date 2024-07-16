@@ -5,6 +5,8 @@ import WebGL from '@taoro/webgl'
 import shaders from './shaders'
 import PerspectiveProjection from './PerspectiveProjection'
 
+// Entity Component System
+
 export class GeometryComponent extends Component {
   #geometry = null
   #buffer = null
@@ -34,11 +36,20 @@ export class GeometryComponent extends Component {
     return this.#vao
   }
 
+  // FIXME: Creo que esto no debería estar en el componente
+  // debería estar en el Renderer en un mapa referenciado
+  // por este componente.
   set vao(vao) {
     if (!(vao instanceof WebGLVertexArrayObject)) {
       throw new TypeError('Invalid Vertex Array Object')
     }
     this.#vao = vao
+  }
+}
+
+export class DustComponent extends Component {
+  constructor(id) {
+    super(id)
   }
 }
 
@@ -195,10 +206,13 @@ export class CustomRenderer {
   #modelView = new Matrix4()
   #modelViewProjection = new Matrix4()
 
-  #billboard = new Matrix4()
-  #billboardView = new Matrix4()
-  #billboardModelView = new Matrix4()
-  #billboardModelViewProjection = new Matrix4()
+  /**
+   * Esta matriz de transformación es específica del
+   * campo de estrellas.
+   */
+  #sfModel = new Matrix4()
+  #sfModelView = new Matrix4()
+  #sfModelViewProjection = new Matrix4()
 
   /**
    * Constructor
@@ -228,7 +242,7 @@ export class CustomRenderer {
    * @param {CameraComponent} camera
    * @param {StarfieldComponent} starfield
    */
-  #renderStarfield(gl, camera, viewTransform, starfield) {
+  #renderStarfield(gl, camera, cameraTransform, starfield) {
     if (!starfield.buffer) {
       starfield.buffer = WebGL.buffer.createArrayBufferFrom(
         gl,
@@ -244,12 +258,21 @@ export class CustomRenderer {
       })
     }
 
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(
+        this.#programs.get('default'),
+        'u_modelViewProjection'
+      ),
+      false,
+      this.#sfModelViewProjection.rawData
+    )
+
     gl.bindVertexArray(starfield.vao)
     gl.drawArrays(gl.POINTS, 0, 1000)
     gl.bindVertexArray(null)
   }
 
-  #renderOrbit(gl, camera, viewTransform, orbit) {
+  #renderOrbit(gl, camera, cameraTransform, orbit) {
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_radius'),
       orbit.semiMajorAxis
@@ -257,7 +280,7 @@ export class CustomRenderer {
     gl.drawArrays(gl.LINE_LOOP, 0, 1000)
   }
 
-  #renderRing(gl, camera, viewTransform, ring) {
+  #renderRing(gl, camera, cameraTransform, ring) {
     gl.uniform2f(
       gl.getUniformLocation(this.#programs.get('ring'), 'u_radius'),
       ring.innerRadius,
@@ -266,20 +289,25 @@ export class CustomRenderer {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 1000)
   }
 
-  #renderImposter(gl, camera, viewTransform, imposter) {
-    /*
+  #renderImposter(gl, camera, cameraTransform, imposter) {
     const transform = Component.findByIdAndConstructor(imposter.id, TransformComponent)
     if (transform) {
+      Matrix4.multiply(this.#model, transform.matrix, this.#viewRotation)
+      Matrix4.multiply(this.#modelView, this.#view, this.#model)
+      Matrix4.multiply(
+        this.#modelViewProjection,
+        camera.projection.matrix,
+        this.#modelView
+      )
       gl.uniformMatrix4fv(
         gl.getUniformLocation(
           this.#programs.get('imposter'),
           'u_modelViewProjection'
         ),
         false,
-        this.#billboardModelViewProjection.rawData
+        this.#modelViewProjection.rawData
       )
     }
-    */
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_size'),
       imposter.radius
@@ -297,25 +325,12 @@ export class CustomRenderer {
    * @param {WebGL2RenderingContext} gl
    * @param {*} camera
    */
-  #renderLargeScale(gl, camera) {
-    const viewTransform = Component.findByIdAndConstructor(
-      camera.id,
-      TransformComponent
-    )
-
+  #renderLargeScale(gl, camera, cameraTransform) {
     gl.useProgram(this.#programs.get('default'))
     const starfields = Component.findByConstructor(StarfieldComponent)
     if (starfields) {
-      gl.uniformMatrix4fv(
-        gl.getUniformLocation(
-          this.#programs.get('default'),
-          'u_modelViewProjection'
-        ),
-        false,
-        this.#modelViewProjection.rawData
-      )
       for (const starfield of starfields) {
-        this.#renderStarfield(gl, camera, viewTransform, starfield)
+        this.#renderStarfield(gl, camera, cameraTransform, starfield)
       }
     }
 
@@ -331,7 +346,7 @@ export class CustomRenderer {
         this.#modelViewProjection.rawData
       )
       for (const orbit of orbits) {
-        this.#renderOrbit(gl, camera, viewTransform, orbit)
+        this.#renderOrbit(gl, camera, cameraTransform, orbit)
       }
     }
 
@@ -347,7 +362,7 @@ export class CustomRenderer {
         this.#modelViewProjection.rawData
       )
       for (const ring of rings) {
-        this.#renderRing(gl, camera, viewTransform, orbit)
+        this.#renderRing(gl, camera, cameraTransform, orbit)
       }
     }
 
@@ -363,9 +378,13 @@ export class CustomRenderer {
         this.#modelViewProjection.rawData
       )
       for (const imposter of imposters) {
-        this.#renderImposter(gl, camera, viewTransform, imposter)
+        this.#renderImposter(gl, camera, cameraTransform, imposter)
       }
     }
+  }
+
+  #renderDust(gl, camera, cameraTransform, dust) {
+    gl.drawArrays(gl.POINTS, 0, 1000)
   }
 
   /**
@@ -375,27 +394,84 @@ export class CustomRenderer {
    * - Cargamentos.
    *
    * @param {WebGL2RenderingContext} gl
-   * @param {*} camera
+   * @param {CameraComponent} camera
+   * @param {TransformComponent} cameraTransform
    */
-  #renderSmallScale(gl, camera) {
+  #renderSmallScale(gl, camera, cameraTransform) {
     gl.clearDepth(1)
     // TODO: Tengo que ver cómo hago el render de todo esto.
+
+    const dusts = Component.findByConstructor(DustComponent)
+    if (dusts) {
+      gl.clearDepth(1)
+      gl.useProgram(this.#programs.get('dust'))
+
+      this.#model.identity()
+      this.#model.copyTranslation(this.#viewModel)
+
+      Matrix4.multiply(this.#modelView, this.#view, this.#model)
+      Matrix4.multiply(
+        this.#modelViewProjection,
+        camera.projection.matrix,
+        this.#modelView
+      )
+
+      gl.uniform3f(
+        gl.getUniformLocation(
+          this.#programs.get('dust'),
+          'u_position'
+        ),
+        this.#viewPosition.m30,
+        this.#viewPosition.m31,
+        this.#viewPosition.m32
+      )
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(
+          this.#programs.get('dust'),
+          'u_modelViewProjection'
+        ),
+        false,
+        this.#modelViewProjection.rawData
+      )
+      for (const dust of dusts) {
+        this.#renderDust(gl, camera, cameraTransform, dust)
+      }
+    }
   }
 
-  #computeMatrices(camera) {
-    const viewTransform = Component.findByIdAndConstructor(
+  #computeStarfieldMatrices(camera) {
+
+  }
+
+  /**
+   * Calculamos las matrices de la vista que se reutilizarán
+   * en las siguientes vistas.
+   *
+   * @param {CameraComponent} camera
+   */
+  #computeViewMatrices(camera) {
+    const cameraTransform = Component.findByIdAndConstructor(
       camera.id,
       TransformComponent
     )
 
-    this.#viewModel.copy(viewTransform.matrix)
-    this.#viewPosition.copy(viewTransform.positionMatrix)
-    this.#viewRotation.copy(viewTransform.rotationMatrix)
+    this.#model.identity()
+
+    this.#viewModel.copy(cameraTransform.matrix)
+    this.#viewRotation.copy(cameraTransform.rotationMatrix)
+    this.#viewPosition.copy(cameraTransform.positionMatrix)
+
+    this.#sfModel.copyTranslation(this.#viewModel)
+    Matrix4.multiply(this.#sfModelView, this.#view, this.#sfModel)
+    Matrix4.multiply(
+      this.#sfModelViewProjection,
+      camera.projection.matrix,
+      this.#sfModelView
+    )
 
     Matrix4.invert(this.#view, this.#viewModel)
-    Matrix4.invert(this.#billboardView, this.#viewRotation)
 
-    Matrix4.multiply(this.#modelView, this.#model, this.#view)
+    Matrix4.multiply(this.#modelView, this.#view, this.#model)
     Matrix4.multiply(
       this.#modelViewProjection,
       camera.projection.matrix,
@@ -413,7 +489,7 @@ export class CustomRenderer {
     const aspectRatio = this.#canvas.width / this.#canvas.height
     camera.projection.aspectRatio = aspectRatio
 
-    this.#computeMatrices(camera)
+    this.#computeViewMatrices(camera)
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
@@ -424,10 +500,17 @@ export class CustomRenderer {
     this.#renderSmallScale(gl, camera)
   }
 
+  /**
+   * Renderiza todos los elementos del escenario.
+   */
   update() {
     const gl = this.#gl
     for (const camera of Component.findByConstructor(CameraComponent)) {
-      this.#renderView(gl, camera)
+      const cameraTransform = Component.findByIdAndConstructor(
+        camera.id,
+        TransformComponent
+      )
+      this.#renderView(gl, camera, cameraTransform)
     }
   }
 }
