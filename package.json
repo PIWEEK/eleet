@@ -9,6 +9,16 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.3.1"
+    "vite": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.15.5+sha1.a58c038faac410c947dbdb93eb30994037d0fce2",
+  "dependencies": {
+    "@taoro/component": "^1.0.2",
+    "@taoro/component-transform-3d": "^1.0.2",
+    "@taoro/game": "^1.0.2",
+    "@taoro/input": "^1.0.2",
+    "@taoro/math-matrix4": "^1.0.1",
+    "@taoro/math-vector3": "^1.0.1",
+    "@taoro/webgl": "^1.0.1"
   }
 }

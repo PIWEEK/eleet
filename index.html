@@ -10,6 +10,16 @@
     <div id="app">
       <canvas></canvas>
     </div>
+    <!--
+      We need user gesture to start the game because
+      AudioContext and other APIs require it.
+    -->
+    <div id="user-gesture" class="overlay">
+      <svg class="play" width="256" height="256" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="30"></circle>
+        <path d="M 24,20 48,32 24,44 Z"></path>
+      </svg>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>
