@@ -18,7 +18,7 @@ export function * Player(game) {
   const collider = new SphereColliderComponent('player', {
     radius: 0.5
   })
-  const speedUIText = new UITextComponent('player', 
+  const speedUIText = new UITextComponent('player',
     'HOLA',
     0,
     0,
@@ -28,12 +28,7 @@ export function * Player(game) {
     'pink'
   )
 
-  const FORWARD = vec3.fromValues(0, 0, 1)
-  const UP = vec3.fromValues(0, 1, 0)
-
   const velocity = vec3.create()
-  const forward = vec3.fromValues(0, 0, 1)
-  const up = vec3.fromValues(0, 1, 0)
 
   const angularAcceleration = vec3.fromValues(
     0.0001,
@@ -109,10 +104,10 @@ export function * Player(game) {
       mat4.rotateY(transform.rotationMatrix, transform.rotationMatrix, rotateY)
     }
 
-    vec3.transformMat4(forward, FORWARD, transform.rotationMatrix)
-    vec3.transformMat4(up, UP, transform.rotationMatrix)
+    vec3.transformMat4(transform.forward, TransformComponent.FORWARD, transform.rotationMatrix)
+    vec3.transformMat4(transform.up, TransformComponent.UP, transform.rotationMatrix)
 
-    vec3.copy(velocity, forward)
+    vec3.copy(velocity, transform.forward)
     vec3.scale(velocity, velocity, linearVelocity[2])
     vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
 

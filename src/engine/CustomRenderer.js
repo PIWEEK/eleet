@@ -149,6 +149,10 @@ export class ImposterComponent extends Component {
 
   get body() { return this.#body }
 
+  get type() {
+    return 1
+  }
+
   get radius() {
     return this.#body?.radius ?? 5
   }
@@ -160,6 +164,9 @@ export class ImposterComponent extends Component {
  * que sólo tiene uno.
  */
 export class TransformComponent extends Component {
+  static UP = vec3.fromValues(0, 1, 0)
+  static FORWARD = vec3.fromValues(0, 0, 1)
+
   #linkedObject = null
 
   #rotationMatrix = mat4.create()
@@ -169,12 +176,18 @@ export class TransformComponent extends Component {
   #largeScalePosition = vec3.create()
   #smallScalePosition = vec3.create()
 
+  #up = vec3.create()
+  #forward = vec3.create()
+
   constructor(id, options) {
     super(id)
     this.#linkedObject = options?.linkedObject ?? null
     this.#largeScalePosition = options?.largeScalePosition ?? vec3.create()
     this.#smallScalePosition = options?.smallScalePosition ?? vec3.create()
   }
+
+  get up() { return this.#up }
+  get forward() { return this.#forward }
 
   get linkedObject() {
     return this.#linkedObject
@@ -236,7 +249,8 @@ export class UITextComponent extends Component {
  */
 export class CameraComponent extends Component {
   #projection = null
-  #projectionViewMatrix = null
+  #projectionViewMatrix = mat4.create()
+  #viewMatrix = mat4.create()
 
   constructor(id, options) {
     super(id)
@@ -246,7 +260,6 @@ export class CameraComponent extends Component {
       0.1,
       1_000_000
     )
-    this.#projectionViewMatrix = mat4.create()
   }
 
   get projection() {
@@ -255,6 +268,10 @@ export class CameraComponent extends Component {
 
   get projectionViewMatrix() {
     return this.#projectionViewMatrix
+  }
+
+  get viewMatrix() {
+    return this.#viewMatrix
   }
 }
 
@@ -472,14 +489,36 @@ export class CustomRenderer {
     const transform = Component.findByIdAndConstructor(imposter.id, TransformComponent)
     if (transform) {
       const cameraRotation = quat.create()
+      const cameraPosition = vec3.create()
       const position = vec3.create()
+
       mat4.getRotation(cameraRotation, cameraTransform.matrix)
       mat4.getTranslation(position, transform.matrix)
+      mat4.getTranslation(cameraPosition, cameraTransform.matrix)
       mat4.fromRotationTranslation(this.#model, cameraRotation, position)
+
+      // mat4.targetTo(this.#model, position, cameraPosition, vec3.fromValues(0, 1, 0))
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
         this.#model
+      )
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(
+          this.#programs.get('imposter'),
+          'u_view'
+        ),
+        false,
+        // TODO: Ver de qué forma se puede corregir la "rotación"
+        //       rara que se forma entre el imposter y la cámara.
+        cameraTransform.rotationMatrix
+      )
+      gl.uniform3fv(
+        gl.getUniformLocation(
+          this.#programs.get('imposter'),
+          'u_position'
+        ),
+        position
       )
       gl.uniformMatrix4fv(
         gl.getUniformLocation(
@@ -742,12 +781,12 @@ export class CustomRenderer {
   #computeViewMatrices(camera, cameraTransform) {
     mat4.identity(this.#model)
 
-    mat4.invert(this.#view, cameraTransform.matrix)
+    mat4.invert(camera.viewMatrix, cameraTransform.matrix)
 
     mat4.multiply(
       camera.projectionViewMatrix,
       camera.projection.matrix,
-      this.#view
+      camera.viewMatrix
     )
 
     mat4.multiply(

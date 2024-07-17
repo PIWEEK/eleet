@@ -8,19 +8,20 @@ precision highp float;
 uniform vec4 u_color;
 uniform int u_type;
 uniform float u_time;
+uniform vec3 u_position;
+uniform mat4 u_view;
 in vec2 v_texCoord;
 out vec4 o_fragColor;
 
 vec4 render_planet(vec2 pos, vec4 color) {
-  vec3 sun = vec3(cos(u_time * 0.5), 0., sin(u_time * 0.5));
-  vec3 norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+  // Esta normal es con respecto a la pantalla.
+  vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+  vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
 
   float d = length(pos);
-  float a = dot(sun, norm);
+  float a = dot(-u_position, world_norm);
 
   if (d < 0.99) {
-    // Output to screen
-    // fragColor = vec4(1) * dither8x8(fragCoord, a);
     return vec4(color) * ceil(a);
   } else if (d > 1.0) {
     return vec4(0);
