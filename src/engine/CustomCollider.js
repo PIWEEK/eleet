@@ -1,5 +1,6 @@
 import { Component } from '@taoro/component'
 import { TransformComponent } from './CustomRenderer'
+import { vec3 } from 'gl-matrix'
 
 export const ColliderScale = {
   LARGE: 1,
@@ -61,9 +62,7 @@ export class CustomCollider {
             TransformComponent
           )
           if ((aCollider.scale & ColliderScale.LARGE)
-            && aTransform.largeScalePosition.distanceTo(
-              bTransform.largeScalePosition
-            ) <
+            && vec3.distance(aTransform.largeScalePosition, bTransform.largeScalePosition) <
             aCollider.radius + bCollider.radius
           ) {
             // TODO: Chocan las esferas a gran escala.
@@ -71,9 +70,7 @@ export class CustomCollider {
             bCollider.collisions.set(aCollider, ['large-scale'])
           }
           if ((aCollider.scale & ColliderScale.SMALL)
-            && aTransform.smallScalePosition.distanceTo(
-              bTransform.smallScalePosition
-            ) <
+            && vec3.distance(aTransform.smallScalePosition, bTransform.smallScalePosition) <
             aCollider.radius + bCollider.radius
           ) {
             // TODO: Chocan las esferas a pequeño escala.

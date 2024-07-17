@@ -18,9 +18,9 @@ export class Body {
    *
    * Si es null quiere decir que no pertenece a ninguna órbita.
    *
-   * @type {OrbitBody|null}
+   * @type {OrbitContent|null}
    */
-  #orbitBody = null
+  #orbitContent = null
 
   /**
    * Sub-órbitas que tiene este cuerpo.
@@ -37,7 +37,7 @@ export class Body {
    */
   constructor(options) {
     this.#seed = options?.seed
-    this.#orbitBody = options?.orbit
+    this.#orbitContent = options?.orbit
     this.#radius = options?.radius
   }
 
@@ -53,10 +53,10 @@ export class Body {
   }
 
   /**
-   * @type {OrbitBody|null}
+   * @type {OrbitContent|null}
    */
-  get orbitBody() {
-    return this.#orbitBody
+  get orbitContent() {
+    return this.#orbitContent
   }
 
   /**

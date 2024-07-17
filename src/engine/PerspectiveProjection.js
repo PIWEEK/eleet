@@ -1,5 +1,6 @@
 import Updatable from './Updatable'
-import { Matrix4 } from '@taoro/math-matrix4'
+// import { Matrix4 } from '@taoro/math-matrix4'
+import { mat4 } from 'gl-matrix'
 
 export class PerspectiveProjection extends Updatable {
   /**
@@ -15,17 +16,17 @@ export class PerspectiveProjection extends Updatable {
   /**
    * @type {number}
    */
-  #near = 0.001
+  #near = 0.1
 
   /**
    * @type {number}
    */
-  #far = 1_000_000
+  #far = 100
 
   /**
    * @type {Matrix4}
    */
-  #matrix = new Matrix4()
+  #matrix = mat4.create()
 
   constructor(
     fieldOfView = Math.PI * 0.5,
@@ -42,7 +43,7 @@ export class PerspectiveProjection extends Updatable {
 
   get matrix() {
     if (this.needsUpdate) {
-      Matrix4.perspective(
+      mat4.perspective(
         this.#matrix,
         this.#fieldOfView,
         this.#aspectRatio,

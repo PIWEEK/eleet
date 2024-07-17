@@ -4,7 +4,12 @@ import { Zone } from './Zone'
 
 export class OrbitContent {
   /**
-   * @type {(Body | Zone)}
+   * @type {'star'|'planet'|'ring'|'zone'}
+   */
+  #type = null
+
+  /**
+   * @type {(Body|Zone|Ring)}
    */
   #content = null
 
@@ -25,12 +30,17 @@ export class OrbitContent {
   /**
    * Constructor
    *
-   * @param {OrbitBodyOptions} options
+   * @param {OrbitContentOptions} options
    */
   constructor(options) {
+    this.#type = options?.type ?? 'star'
     this.#orbit = options?.orbit
     this.#content = options?.content
     this.#trueAnomaly = options?.trueAnomaly
+  }
+
+  get type() {
+    return this.#type
   }
 
   get content() {

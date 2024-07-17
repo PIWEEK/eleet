@@ -26,6 +26,9 @@ dependencies:
   '@taoro/webgl':
     specifier: ^1.0.1
     version: 1.0.1
+  gl-matrix:
+    specifier: ^3.4.3
+    version: 3.4.3
 
 devDependencies:
   vite:
@@ -599,6 +602,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /gl-matrix@3.4.3:
+    resolution: {integrity: sha512-wcCp8vu8FT22BnvKVPjXa/ICBWRq/zjFfdofZy1WSpQZpphblv12/bOQLBC1rMM7SGOFS9ltVmKOHil5+Ml7gA==}
+    dev: false
 
   /nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}

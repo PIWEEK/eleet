@@ -2,6 +2,7 @@
 
 precision highp float;
 
+uniform vec4 u_color;
 in vec2 v_texCoord;
 out vec4 o_fragColor;
 
@@ -10,5 +11,5 @@ void main() {
     discard;
   }
 
-  o_fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  o_fragColor = u_color;
 }

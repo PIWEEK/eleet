@@ -143,7 +143,7 @@ export class Orbit {
   /**
    * Cuerpos sujetos a esta órbita.
    *
-   * @type {Array<OrbiyBody>}
+   * @type {Array<OrbitContent>}
    */
   get orbitObjects() {
     return this.#orbitObjects

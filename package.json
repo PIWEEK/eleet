@@ -19,6 +19,7 @@
     "@taoro/input": "^1.0.2",
     "@taoro/math-matrix4": "^1.0.1",
     "@taoro/math-vector3": "^1.0.1",
-    "@taoro/webgl": "^1.0.1"
+    "@taoro/webgl": "^1.0.1",
+    "gl-matrix": "^3.4.3"
   }
 }

@@ -4,5 +4,14 @@ export class Zone {
    *
    * @type {number}
    */
-  #seed = 0  
+  #seed = 0
+
+  /**
+   * Constructor
+   *
+   * @param {number} seed
+   */
+  constructor(seed) {
+    this.#seed = seed
+  }
 }

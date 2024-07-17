@@ -1,6 +1,7 @@
 import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-lcg'
 import { Body } from './Body'
+import { Ring } from './Ring'
 import { Orbit } from './Orbit'
 import { OrbitContent } from './OrbitContent'
 import { Zone } from './Zone'
@@ -32,6 +33,91 @@ export class StellarForge {
   static ORBIT_DISTANCE = 50.00
 
   /**
+   * Creates a new orbit object.
+   *
+   * @param {Random} random
+   * @param {Orbit} orbit
+   * @param {string} type
+   * @returns {Body|Ring|Zone}
+   */
+  static #createOrbitObject(random, orbit, type) {
+    switch (type) {
+      case 'body':
+        return new Body({
+          seed: random.seed,
+          // Devuelve un planeta entre el tamaño de mercurio
+          // y el tamaño de jupiter.
+          radius: random.between(0.1, 0.6),
+        })
+
+      case 'ring':
+        return new Ring({
+          seed: random.seed,
+          innerRadius: random.between(orbit.semiMajorAxis - 50, orbit.semiMajorAxis - 25),
+          outerRadius: random.between(orbit.semiMajorAxis + 25, orbit.semiMajorAxis + 50)
+        })
+
+      case 'zone':
+        return new Zone({
+          seed: random.seed
+        })
+    }
+  }
+
+  static #createBodyOrbits(random, body, maxDepth = 2, depth = 0) {
+    const numOrbits = random.intBetween(5, 9)
+    for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
+      const orbit = new Orbit({
+        body: body,
+        semiMajorAxis: random.between(
+          StellarForge.ORBIT_DISTANCE * (orbitIndex - 0.5),
+          StellarForge.ORBIT_DISTANCE * (orbitIndex + 0.5)
+        ),
+        eccentricity: 0,
+      })
+
+      const numOrbitObjects = random.between(3, 4)
+      for (
+        let orbitObjectIndex = 0;
+        orbitObjectIndex < numOrbitObjects;
+        orbitObjectIndex++
+      ) {
+        const trueAnomaly = random.angle()
+        const type = random.pickOneWeighted(['body', 'zone'], [5, 5])
+        const content = this.#createOrbitObject(random, orbit, type)
+        if (content instanceof Body && depth < maxDepth) {
+          this.#createBodyOrbits(random, content, maxDepth, depth + 1)
+          if (content.radius > 0.5) {
+            orbit.orbitObjects.push(
+              new OrbitContent({
+                type: 'ring',
+                orbit: orbit,
+                content: new Ring({
+                  seed: random.seed,
+                  innerRadius: random.between(content.radius + 0.1, content.radius + 0.2),
+                  outerRadius: random.between(content.radius + 0.4, content.radius + 0.5),
+                }),
+                trueAnomaly: trueAnomaly,
+              })
+            )
+          }
+        }
+
+        orbit.orbitObjects.push(
+          new OrbitContent({
+            type: type,
+            orbit: orbit,
+            content: content,
+            trueAnomaly: trueAnomaly,
+          })
+        )
+      }
+      body.orbits.push(orbit)
+    }
+    return body
+  }
+
+  /**
    * Constructor
    *
    * @param {number} seed Semilla utilizada para generar la estrella.
@@ -43,38 +129,6 @@ export class StellarForge {
       seed,
       radius: random.between(0.5, 1.5)
     })
-    const numOrbits = random.intBetween(5, 9)
-    for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
-      const orbit = new Orbit({
-        body: star,
-        semiMajorAxis: random.between(
-          StellarForge.ORBIT_DISTANCE * (orbitIndex - 0.5),
-          StellarForge.ORBIT_DISTANCE * (orbitIndex + 0.5)
-        ),
-        eccentricity: 0,
-      })
-
-      const orbitType = random.between(0, 1) > 0.5 ? 'body': 'zone'
-      orbit.orbitObjects.push(
-        new OrbitContent({
-          orbit: orbit,
-          type: orbitType,
-          content: (orbitType == 'body') ?
-            new Body({
-              seed: random.seed,
-              // Devuelve un planeta entre el tamaño de mercurio
-              // y el tamaño de jupiter.
-              radius: random.between(0.1, 0.6),
-            })
-            : 
-            new Zone({
-              seed: random.seed,
-            }),
-          trueAnomaly: random.angle()
-        })
-      )
-      star.orbits.push(orbit)
-    }
-    return star
+    return this.#createBodyOrbits(random, star)
   }
 }

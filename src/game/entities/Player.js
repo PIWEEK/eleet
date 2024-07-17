@@ -1,5 +1,6 @@
-import { Matrix4 } from '@taoro/math-matrix4'
-import { Vector3 } from '@taoro/math-vector3'
+// import { Matrix4 } from '@taoro/math-matrix4'
+// import { Vector3 } from '@taoro/math-vector3'
+import { mat4, vec3 } from 'gl-matrix'
 import { SphereColliderComponent } from '../../engine/CustomCollider'
 import { CameraComponent, TransformComponent } from '../../engine/CustomRenderer'
 
@@ -18,29 +19,26 @@ export function * Player(game) {
     radius: 0.5
   })
 
-  const FORWARD = new Vector3(Float32Array, 0, 0, 1)
-  const UP = new Vector3(Float32Array, 0, 1, 0)
+  const FORWARD = vec3.fromValues(0, 0, 1)
+  const UP = vec3.fromValues(0, 1, 0)
 
-  const velocity = new Vector3()
-  const forward = new Vector3(Float32Array, 0, 0, 1)
-  const up = new Vector3(Float32Array, 0, 1, 0)
+  const velocity = vec3.create()
+  const forward = vec3.fromValues(0, 0, 1)
+  const up = vec3.fromValues(0, 1, 0)
 
-  const angularAcceleration = new Vector3(
-    Float32Array,
+  const angularAcceleration = vec3.fromValues(
     0.0001,
     0.0001,
     0.0001,
   )
 
-  const linearAcceleration = new Vector3(
-    Float32Array,
+  const linearAcceleration = vec3.fromValues(
     0.0001,
     0.0001,
     0.0001
   )
 
-  const linearVelocity = new Vector3(
-    Float32Array,
+  const linearVelocity = vec3.fromValues(
     0,
     0,
     0,
@@ -54,63 +52,64 @@ export function * Player(game) {
 
   while (true) {
     if (collider.collisions.size > 0) {
-      console.log('CHOCÓ!')
+      // console.log('CHOCÓ!')
     }
 
     if (game.input.stateOf(0, 'throttle-up')) {
-      linearVelocity.z += linearAcceleration.z
+      linearVelocity[2] += linearAcceleration[2]
     } else if (game.input.stateOf(0, 'throttle-down')) {
-      linearVelocity.z -= linearAcceleration.z
+      linearVelocity[2] -= linearAcceleration[2]
     }
 
     if (game.input.stateOf(0, 'pitch-up')) {
-      rotateX -= angularAcceleration.x
+      rotateX -= angularAcceleration[0]
     } else if (game.input.stateOf(0, 'pitch-down')) {
-      rotateX += angularAcceleration.x
+      rotateX += angularAcceleration[0]
     } else {
       rotateX *= 0.9
     }
 
     if (game.input.stateOf(0, 'roll-left')) {
-      rotateZ += angularAcceleration.z
+      rotateZ += angularAcceleration[2]
     } else if (game.input.stateOf(0, 'roll-right')) {
-      rotateZ -= angularAcceleration.z
+      rotateZ -= angularAcceleration[2]
     } else {
       rotateZ *= 0.9
     }
 
     if (game.input.stateOf(0, 'yaw-left')) {
-      rotateY += angularAcceleration.y
+      rotateY += angularAcceleration[1]
     } else if (game.input.stateOf(0, 'yaw-right')) {
-      rotateY -= angularAcceleration.y
+      rotateY -= angularAcceleration[1]
     } else {
       rotateY *= 0.9
     }
 
     if (rotateZ !== 0) {
-      Matrix4.rotateZ(transform.rotationMatrix, transform.rotationMatrix, rotateZ)
+      mat4.rotateZ(transform.rotationMatrix, transform.rotationMatrix, rotateZ)
     }
 
     if (rotateX !== 0) {
-      Matrix4.rotateX(transform.rotationMatrix, transform.rotationMatrix, rotateX)
+      mat4.rotateX(transform.rotationMatrix, transform.rotationMatrix, rotateX)
     }
 
     if (rotateY !== 0) {
-      Matrix4.rotateY(transform.rotationMatrix, transform.rotationMatrix, rotateY)
+      mat4.rotateY(transform.rotationMatrix, transform.rotationMatrix, rotateY)
     }
 
-    Vector3.transform(forward, FORWARD, transform.rotationMatrix)
-    Vector3.transform(up, UP, transform.rotationMatrix)
+    vec3.transformMat4(forward, FORWARD, transform.rotationMatrix)
+    vec3.transformMat4(up, UP, transform.rotationMatrix)
 
-    velocity.copy(forward).scale(linearVelocity.z)
-    transform.largeScalePosition.add(velocity)
+    vec3.copy(velocity, forward)
+    vec3.scale(velocity, velocity, linearVelocity[2])
+    vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
 
-    Matrix4.identity(transform.positionMatrix)
-    Matrix4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
+    mat4.identity(transform.positionMatrix)
+    mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
 
-    Matrix4.identity(transform.matrix)
-    Matrix4.multiply(transform.matrix, transform.matrix, transform.positionMatrix)
-    Matrix4.multiply(transform.matrix, transform.matrix, transform.rotationMatrix)
+    mat4.identity(transform.matrix)
+    mat4.multiply(transform.matrix, transform.matrix, transform.positionMatrix)
+    mat4.multiply(transform.matrix, transform.matrix, transform.rotationMatrix)
 
     yield
   }
