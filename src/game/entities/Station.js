@@ -6,14 +6,14 @@ export function* Station(game, options) {
   const transform = new TransformComponent(`asteroid_${id}`, {
     smallScalePosition: options.smallScalePosition,
   })
-  if (!game.resources.has('geometries/asteroide-peque.blend.json')) {
-    const model = game.resources.get('models/asteroide-peque.blend.json')
+  if (!game.resources.has('geometries/station.blend.json')) {
+    const model = game.resources.get('models/station.blend.json')
     game.resources.set(
-      'geometries/asteroide-peque.blend.json',
+      'geometries/station.blend.json',
       new MeshGeometry(model.meshes[0])
     )
   }
-  const geometry = game.resources.get('geometries/asteroide-peque.blend.json')
+  const geometry = game.resources.get('geometries/station.blend.json')
   const mesh = new MeshComponent(`asteroid_${id}`, geometry)
 
   while (true) {

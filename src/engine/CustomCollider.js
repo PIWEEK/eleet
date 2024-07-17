@@ -67,16 +67,26 @@ export class CustomCollider {
             && vec3.distance(aTransform.largeScalePosition, bTransform.largeScalePosition) <
             aCollider.radius + bCollider.radius
           ) {
-            aCollider.collisions.set(bCollider, ColliderScale.LARGE)
-            bCollider.collisions.set(aCollider, ColliderScale.LARGE)
+            const collision = {
+              scale: ColliderScale.LARGE,
+              colliders: [aCollider, bCollider],
+              transforms: [aTransform, bTransform]
+            }
+            aCollider.collisions.set(bCollider, collision)
+            bCollider.collisions.set(aCollider, collision)
           }
-          
+
           if ((aCollider.scale & ColliderScale.SMALL)
             && vec3.distance(aTransform.smallScalePosition, bTransform.smallScalePosition) <
             aCollider.radius + bCollider.radius
           ) {
-            aCollider.colliders.set(bCollider, (aCollider.collisions.get(bCollider) ?? 0) | ColliderScale.SMALL)
-            bCollider.colliders.set(aCollider, (bCollider.collisions.get(aCollider) ?? 0) | ColliderScale.SMALL)
+            const collision = {
+              scale: ColliderScale.SMALL,
+              colliders: [aCollider, bCollider],
+              transforms: [aTransform, bTransform],
+            }
+            aCollider.colliders.set(bCollider, collision)
+            bCollider.colliders.set(aCollider, collision)
           }
         }
       }

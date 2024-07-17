@@ -347,6 +347,10 @@ export class CustomRenderer {
   constructor(canvas) {
     this.#canvas = canvas
 
+    // TODO: Esto debería poder exponerse
+    // en el motor del juego (la clase
+    // game debería permitir el acceso
+    // al renderer con game.renderer)
     globalThis.debugRenderer = {
       largeScale: true,
       starfields: true,
@@ -356,21 +360,35 @@ export class CustomRenderer {
       smallScale: true,
       meshes: true,
       dusts: true,
+      ui: {
+        zones: true,
+        texts: true,
+      },
     }
 
     const gl = canvas.getContext('webgl2', {
       depth: true,
       stencil: false,
-      antialias: true
+      antialias: true,
     })
 
     const uiCanvas = new OffscreenCanvas(1920, 1080)
     const uiContext = uiCanvas.getContext('2d', {
-      alpha: true
+      alpha: true,
     })
     const uiTexture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, uiTexture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, uiCanvas.width, uiCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      uiCanvas.width,
+      uiCanvas.height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    )
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -390,7 +408,7 @@ export class CustomRenderer {
     this.#ui = {
       canvas: uiCanvas,
       context: uiContext,
-      texture: uiTexture
+      texture: uiTexture,
     }
 
     /*
@@ -442,11 +460,7 @@ export class CustomRenderer {
     const model = mat4.create()
     mat4.getTranslation(position, cameraTransform.matrix)
     mat4.translate(model, model, position)
-    mat4.multiply(
-      this.#projectionViewModel,
-      camera.projectionViewMatrix,
-      model
-    )
+    mat4.multiply(this.#projectionViewModel, camera.projectionViewMatrix, model)
 
     gl.uniformMatrix4fv(
       gl.getUniformLocation(
@@ -462,7 +476,10 @@ export class CustomRenderer {
   }
 
   #renderOrbit(gl, camera, cameraTransform, orbit) {
-    const transform = Component.findByIdAndConstructor(orbit.id, TransformComponent)
+    const transform = Component.findByIdAndConstructor(
+      orbit.id,
+      TransformComponent
+    )
     if (transform) {
       mat4.multiply(
         this.#projectionViewModel,
@@ -483,7 +500,7 @@ export class CustomRenderer {
     const total = 100
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_total'),
-      total,
+      total
     )
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_radius'),
@@ -551,7 +568,10 @@ export class CustomRenderer {
   }
 
   #renderImposter(gl, camera, cameraTransform, imposter) {
-    const transform = Component.findByIdAndConstructor(imposter.id, TransformComponent)
+    const transform = Component.findByIdAndConstructor(
+      imposter.id,
+      TransformComponent
+    )
     if (transform) {
       const cameraRotation = quat.create()
       const cameraPosition = vec3.create()
@@ -573,20 +593,14 @@ export class CustomRenderer {
         this.#model
       )
       gl.uniformMatrix4fv(
-        gl.getUniformLocation(
-          this.#programs.get('imposter'),
-          'u_view'
-        ),
+        gl.getUniformLocation(this.#programs.get('imposter'), 'u_view'),
         false,
         // TODO: Ver de qué forma se puede corregir la "rotación"
         //       rara que se forma entre el imposter y la cámara.
         cameraTransform.rotationMatrix
       )
       gl.uniform3fv(
-        gl.getUniformLocation(
-          this.#programs.get('imposter'),
-          'u_position'
-        ),
+        gl.getUniformLocation(this.#programs.get('imposter'), 'u_position'),
         position
       )
       gl.uniformMatrix4fv(
@@ -601,12 +615,15 @@ export class CustomRenderer {
     const colors = {
       [Body]: [1, 1, 1, 1],
       [Ring]: [0, 1, 0, 1],
-      [Zone]: [0, 0, 1, 1]
+      [Zone]: [0, 0, 1, 1],
     }
     const [r, g, b, a] = colors[imposter.body.constructor]
     gl.uniform4f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_color'),
-      r, g, b, a
+      r,
+      g,
+      b,
+      a
     )
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_type'),
@@ -621,7 +638,6 @@ export class CustomRenderer {
       imposter.radius
     )
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-
   }
 
   #renderStarfields(gl, camera, cameraTransform, starfields) {
@@ -709,14 +725,31 @@ export class CustomRenderer {
   }
 
   #renderMeshSolid(gl, camera, cameraTransform, mesh) {
-    gl.uniform4f(gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'), 0.0, 0.0, 0.0, 1.0)
+    gl.uniform4f(
+      gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'),
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    )
     gl.bindVertexArray(mesh.geometry.triangleVertexArrayObject)
-    gl.drawElements(gl.TRIANGLES, mesh.geometry.triangles.length, gl.UNSIGNED_SHORT, 0)
+    gl.drawElements(
+      gl.TRIANGLES,
+      mesh.geometry.triangles.length,
+      gl.UNSIGNED_SHORT,
+      0
+    )
     gl.bindVertexArray(null)
   }
 
   #renderMeshLines(gl, camera, cameraTransform, mesh) {
-    gl.uniform4f(gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'), 1.0, 1.0, 1.0, 1.0)
+    gl.uniform4f(
+      gl.getUniformLocation(this.#programs.get('mesh'), 'u_color'),
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    )
     gl.bindVertexArray(mesh.geometry.edgeVertexArrayObject)
     gl.drawElements(gl.LINES, mesh.geometry.edges.length, gl.UNSIGNED_SHORT, 0)
     gl.bindVertexArray(null)
@@ -727,13 +760,15 @@ export class CustomRenderer {
       mesh.geometry.createVertexArrayObject(gl)
     }
 
-    const transform = Component.findByIdAndConstructor(mesh.id, TransformComponent)
+    const transform = Component.findByIdAndConstructor(
+      mesh.id,
+      TransformComponent
+    )
     if (transform) {
-
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
-        transform.largeScaleMatrix
+        transform.smallScaleMatrix
       )
 
       gl.uniformMatrix4fv(
@@ -744,9 +779,7 @@ export class CustomRenderer {
         false,
         this.#projectionViewModel
       )
-
     } else {
-
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
@@ -761,7 +794,6 @@ export class CustomRenderer {
         false,
         this.#projectionViewModel
       )
-
     }
 
     this.#renderMeshSolid(gl, camera, cameraTransform, mesh)
@@ -825,6 +857,7 @@ export class CustomRenderer {
    */
   #renderSmallScale(gl, camera, cameraTransform) {
     if (!globalThis.debugRenderer.smallScale) return
+    gl.clear(gl.DEPTH_BUFFER_BIT)
     const meshes = Component.findByConstructor(MeshComponent)
     if (meshes) {
       this.#renderMeshes(gl, camera, cameraTransform, meshes)
@@ -838,9 +871,7 @@ export class CustomRenderer {
     }
   }
 
-  #computeStarfieldMatrices(camera) {
-
-  }
+  #computeStarfieldMatrices(camera) {}
 
   /**
    * Calculamos las matrices de la vista que se reutilizarán
@@ -935,7 +966,10 @@ export class CustomRenderer {
   }
 
   #renderUIZone(gl, context, camera, cameraTransform, zone) {
-    const transform = Component.findByIdAndConstructor(zone.id, TransformComponent)
+    const transform = Component.findByIdAndConstructor(
+      zone.id,
+      TransformComponent
+    )
     if (!transform) return
 
     mat4.identity(this.#model)
@@ -952,11 +986,16 @@ export class CustomRenderer {
       camera.projectionViewMatrix
     )
 
-    if (transform.projectedPosition[2] > 1)
-      return
+    if (transform.projectedPosition[2] > 1) return
 
-    const x = (1 + (transform.projectedPosition[0] / transform.projectedPosition[2])) / 2 * context.canvas.width
-    const y = (1 + (transform.projectedPosition[1] / -transform.projectedPosition[2])) / 2 * context.canvas.height
+    const x =
+      ((1 + transform.projectedPosition[0] / transform.projectedPosition[2]) /
+        2) *
+      context.canvas.width
+    const y =
+      ((1 + transform.projectedPosition[1] / -transform.projectedPosition[2]) /
+        2) *
+      context.canvas.height
 
     context.strokeStyle = '#fff'
     context.setLineDash([4, 4])
@@ -965,9 +1004,16 @@ export class CustomRenderer {
     context.stroke()
     context.font = '16px monospace'
     context.textAlign = 'center'
-    context.textBaseline = 'center'
+    context.textBaseline = 'top'
     context.fillStyle = 'white'
-    context.fillText('ZONE', x, y)
+    context.fillText('ZONE', x, y + 40)
+  }
+
+  #renderUIZones(gl, context, camera, cameraTransform, zones) {
+    if (!globalThis.debugRenderer.ui.zones) return
+    for (const zone of zones) {
+      this.#renderUIZone(gl, context, camera, cameraTransform, zone)
+    }
   }
 
   #renderUIText(gl, context, text) {
@@ -978,20 +1024,23 @@ export class CustomRenderer {
     context.fillText(text.text, text.x, text.y)
   }
 
+  #renderUITexts(gl, context, texts) {
+    if (!globalThis.debugRenderer.ui.texts) return
+    for (const text of texts) {
+      this.#renderUIText(gl, context, text)
+    }
+  }
+
   #renderUI(gl, camera, cameraTransform, context) {
-    context.clearRect(0, 0,context.canvas.width, context.canvas.height)
-    const uiZones = Component.findByConstructor(UIZoneComponent)
-    if (uiZones) {
-      for (const uiZone of uiZones) {
-        this.#renderUIZone(gl, context, camera, cameraTransform, uiZone)
-      }
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height)
+    const zones = Component.findByConstructor(UIZoneComponent)
+    if (zones) {
+      this.#renderUIZones(gl, context, camera, cameraTransform, zones)
     }
 
-    const uiTexts = Component.findByConstructor(UITextComponent)
-    if (uiTexts) {
-      for (const uiText of uiTexts) {
-        this.#renderUIText(gl, context, uiText)
-      }
+    const texts = Component.findByConstructor(UITextComponent)
+    if (texts) {
+      this.#renderUITexts(gl, context, texts)
     }
 
     // Pintamos todo lo que vaya en el canvas 2D.
@@ -1000,8 +1049,19 @@ export class CustomRenderer {
     gl.blendFunc(gl.ONE, gl.ONE)
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, this.#ui.texture)
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.#ui.canvas)
-    gl.uniform1i(gl.getUniformLocation(this.#programs.get('ui'), 'u_sampler'), 0)
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      this.#ui.canvas
+    )
+    gl.uniform1i(
+      gl.getUniformLocation(this.#programs.get('ui'), 'u_sampler'),
+      0
+    )
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     gl.bindTexture(gl.TEXTURE_2D, null)
     gl.disable(gl.BLEND)

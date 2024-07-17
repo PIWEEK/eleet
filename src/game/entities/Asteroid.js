@@ -1,5 +1,6 @@
 import { TransformComponent, MeshComponent } from '../../engine/CustomRenderer'
 import MeshGeometry from '../../engine/geometries/MeshGeometry'
+import { mat4 } from 'gl-matrix'
 
 export const AsteroidSize = {
   SMALL: 0,
@@ -28,6 +29,12 @@ export function * Asteroid(game, options) {
   const geometry = game.resources.get(`geometries/${resourceName}`)
   const mesh = new MeshComponent(`asteroid_${id}`,
     geometry
+  )
+
+  mat4.translate(
+    transform.smallScaleMatrix,
+    transform.smallScaleMatrix,
+    transform.smallScalePosition
   )
 
   while (true) {

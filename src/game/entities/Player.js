@@ -1,6 +1,7 @@
 // import { Matrix4 } from '@taoro/math-matrix4'
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
+import { linear } from '@taoro/math-interpolation'
 import { ColliderScale, SphereColliderComponent } from '../../engine/CustomCollider'
 import { CameraComponent, TransformComponent, UITextComponent } from '../../engine/CustomRenderer'
 import { Zone } from './Zone'
@@ -57,11 +58,40 @@ export function * Player(game) {
   let rotateY = 0
   let rotateZ = 0
 
+  let autoPilot = false
+  let autoPilotStart = 0
+
   while (true) {
     if (collider.collisions.size > 0 && flightScale === 'large-scale') {
       // console.log('CHOCÓ!')
-      for (const [otherCollider, scale] of collider.collisions) {
-        console.log('collision', otherCollider, scale)
+      for (const [otherCollider, collision] of collider.collisions) {
+        console.log('collision', otherCollider, collision)
+        if (collision.colliders[0] === collider) {
+          vec3.subtract(
+            transform.smallScalePosition,
+            collision.transforms[0].largeScalePosition,
+            collision.transforms[1].largeScalePosition
+          )
+        } else {
+          vec3.subtract(
+            transform.smallScalePosition,
+            collision.transforms[1].largeScalePosition,
+            collision.transforms[0].largeScalePosition
+          )
+        }
+
+        vec3.scale(
+          transform.smallScalePosition,
+          transform.smallScalePosition,
+          100
+        )
+
+        rotateX = 0
+        rotateY = 0
+        rotateZ = 0
+
+        autoPilot = true
+        autoPilotStart = Date.now()
 
         collider.scale = ColliderScale.SMALL
 
@@ -73,34 +103,47 @@ export function * Player(game) {
       }
     }
 
-    if (game.input.stateOf(0, 'throttle-up')) {
-      linearVelocity[2] += linearAcceleration[2]
-    } else if (game.input.stateOf(0, 'throttle-down')) {
-      linearVelocity[2] -= linearAcceleration[2]
-    }
+    if (!autoPilot) {
+      if (game.input.stateOf(0, 'throttle-up')) {
+        linearVelocity[2] += linearAcceleration[2]
+      } else if (game.input.stateOf(0, 'throttle-down')) {
+        linearVelocity[2] -= linearAcceleration[2]
+      }
 
-    if (game.input.stateOf(0, 'pitch-up')) {
-      rotateX -= angularAcceleration[0]
-    } else if (game.input.stateOf(0, 'pitch-down')) {
-      rotateX += angularAcceleration[0]
-    } else {
-      rotateX *= 0.9
-    }
+      if (game.input.stateOf(0, 'pitch-up')) {
+        rotateX -= angularAcceleration[0]
+      } else if (game.input.stateOf(0, 'pitch-down')) {
+        rotateX += angularAcceleration[0]
+      } else {
+        rotateX *= 0.9
+      }
 
-    if (game.input.stateOf(0, 'roll-left')) {
-      rotateZ += angularAcceleration[2]
-    } else if (game.input.stateOf(0, 'roll-right')) {
-      rotateZ -= angularAcceleration[2]
-    } else {
-      rotateZ *= 0.9
-    }
+      if (game.input.stateOf(0, 'roll-left')) {
+        rotateZ += angularAcceleration[2]
+      } else if (game.input.stateOf(0, 'roll-right')) {
+        rotateZ -= angularAcceleration[2]
+      } else {
+        rotateZ *= 0.9
+      }
 
-    if (game.input.stateOf(0, 'yaw-left')) {
-      rotateY += angularAcceleration[1]
-    } else if (game.input.stateOf(0, 'yaw-right')) {
-      rotateY -= angularAcceleration[1]
+      if (game.input.stateOf(0, 'yaw-left')) {
+        rotateY += angularAcceleration[1]
+      } else if (game.input.stateOf(0, 'yaw-right')) {
+        rotateY -= angularAcceleration[1]
+      } else {
+        rotateY *= 0.9
+      }
     } else {
-      rotateY *= 0.9
+      const autoPilotTime = Date.now() - autoPilotStart
+      linearVelocity[2] = linear(
+        (autoPilotTime / 1000),
+        -0.5,
+        -0.001
+      )
+      if (autoPilotTime >= 1000) {
+        linearVelocity[2] = -0.001
+        autoPilot = false
+      }
     }
 
     if (rotateZ !== 0) {
@@ -152,7 +195,7 @@ export function * Player(game) {
       mat4.copy(transform.matrix, transform.smallScaleMatrix)
     }
 
-    speedUIText.text = flightScale;
+    speedUIText.text = linearVelocity[2];
     yield
   }
 
