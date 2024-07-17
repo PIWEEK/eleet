@@ -19,5 +19,5 @@ vec2 get_vertex(int index) {
 
 void main() {
   gl_Position = vec4(get_vertex(gl_VertexID), 0.0, 1.0);
-  v_texCoord = get_vertex(gl_VertexID);
+  v_texCoord = (vec2(1.0,-1.0) * get_vertex(gl_VertexID) + 1.0) / 2.0;
 }

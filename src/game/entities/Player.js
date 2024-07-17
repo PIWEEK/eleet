@@ -2,7 +2,7 @@
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
 import { SphereColliderComponent } from '../../engine/CustomCollider'
-import { CameraComponent, TransformComponent } from '../../engine/CustomRenderer'
+import { CameraComponent, TransformComponent, UITextComponent } from '../../engine/CustomRenderer'
 
 /**
  * Jugador
@@ -18,6 +18,15 @@ export function * Player(game) {
   const collider = new SphereColliderComponent('player', {
     radius: 0.5
   })
+  const speedUIText = new UITextComponent('player', 
+    'HOLA',
+    0,
+    0,
+    '120px monospace',
+    'left',
+    'top',
+    'pink'
+  )
 
   const FORWARD = vec3.fromValues(0, 0, 1)
   const UP = vec3.fromValues(0, 1, 0)
@@ -111,6 +120,7 @@ export function * Player(game) {
     mat4.multiply(transform.matrix, transform.matrix, transform.positionMatrix)
     mat4.multiply(transform.matrix, transform.matrix, transform.rotationMatrix)
 
+    speedUIText.text = velocity[2];
     yield
   }
 

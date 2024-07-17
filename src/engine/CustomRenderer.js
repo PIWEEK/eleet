@@ -194,6 +194,36 @@ export class TransformComponent extends Component {
   }
 }
 
+export class UITextComponent extends Component {
+    #text = null
+    #x = 0
+    #y = 0  
+    #font = '16px monospace'
+    #textAlign = 'left'
+    #textBaseline = 'top'
+    #fillStyle = 'black'
+  
+    constructor(id, text, x ,y, font, textAlign, textBaseline, fillStyle) {
+      super(id)
+      this.#text = text
+      this.#x = x
+      this.#y = y
+      this.#font = font
+      this.#textAlign = textAlign
+      this.#textBaseline = textBaseline
+      this.#fillStyle = fillStyle
+    }
+
+    get text() { return this.#text}
+    get x() { return this.#x} 
+    get y() { return this.#y} 
+    get font() { return this.#font} 
+    get textAlign() { return this.#textAlign } 
+    get textBaseline() { return this.#textBaseline } 
+    get fillStyle() { return this.#fillStyle } 
+    set text(newText) {this.#text = newText }
+  }
+
 /**
  * Componente cámara que utilizará el renderizador.
  */
@@ -295,6 +325,9 @@ export class CustomRenderer {
     const uiTexture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, uiTexture)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, uiCanvas.width, uiCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     /*
     gl.texSubImage2D(
       gl.TEXTURE_2D,
@@ -715,13 +748,24 @@ export class CustomRenderer {
     this.#renderSmallScale(gl, camera, cameraTransform)
   }
 
-  #renderUI(gl) {
-    this.#ui.font = '16px monospace'
-    this.#ui.textAlign = 'left'
-    this.#ui.textBaseline = 'top'
-    this.#ui.context.fillText("GANGRENAAAAA!!!", 0, 0)
+  #renderUIText(gl, context, text) {
+    context.font = text.font
+    context.textAlign = text.textAlign
+    context.textBaseline = text.textBaseline
+    context.fillStyle = text.fillStyle
+    context.fillText(text.text, text.x, text.y)
+  }
 
-    // TODO: Pintamos todo lo que vaya en el canvas 2D.
+  #renderUI(gl, context) {
+    context.clearRect(0, 0,context.canvas.width, context.canvas.height)
+    const uiTexts = Component.findByConstructor(UITextComponent);
+    if (uiTexts) {
+      for (const uiText of uiTexts) {
+        this.#renderUIText(gl, context, uiText)
+      }
+    }
+
+    // Pintamos todo lo que vaya en el canvas 2D.
     gl.useProgram(this.#programs.get('ui'))
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.ONE, gl.ONE)
@@ -743,7 +787,6 @@ export class CustomRenderer {
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST)
-    debugger
     // gl.disable(gl.CULL_FACE)
     for (const camera of Component.findByConstructor(CameraComponent)) {
       const cameraTransform = Component.findByIdAndConstructor(
@@ -753,6 +796,6 @@ export class CustomRenderer {
       this.#renderView(gl, camera, cameraTransform)
     }
     gl.disable(gl.DEPTH_TEST)
-    this.#renderUI(gl)
+    this.#renderUI(gl, this.#ui.context)
   }
 }
