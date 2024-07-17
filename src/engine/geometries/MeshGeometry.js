@@ -16,8 +16,6 @@ export class MeshGeometry {
     this.#vertices = new Float32Array(options.vertices)
     this.#triangles = new Uint16Array(options.triangles)
     this.#edges = new Uint16Array(options.edges)
-
-    console.log(this.#vertices, this.#triangles, this.#edges)
   }
 
   get vertices() {

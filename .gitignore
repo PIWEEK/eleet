@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+public/models/*.blend
+public/models/*.blend1
+public/models/*.blend2

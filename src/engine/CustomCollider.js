@@ -18,6 +18,7 @@ export class ColliderComponent extends Component {
   }
 
   get scale() { return this.#scale }
+  set scale(newScale) { this.#scale = newScale }
   get collisions() { return this.#collisions }
 }
 
@@ -69,6 +70,7 @@ export class CustomCollider {
             aCollider.collisions.set(bCollider, ColliderScale.LARGE)
             bCollider.collisions.set(aCollider, ColliderScale.LARGE)
           }
+          
           if ((aCollider.scale & ColliderScale.SMALL)
             && vec3.distance(aTransform.smallScalePosition, bTransform.smallScalePosition) <
             aCollider.radius + bCollider.radius

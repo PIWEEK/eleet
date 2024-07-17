@@ -1,4 +1,4 @@
-import { DustComponent, RingComponent, ImposterComponent, OrbitComponent, StarfieldComponent, TransformComponent } from '../../engine/CustomRenderer'
+import { DustComponent, RingComponent, ImposterComponent, OrbitComponent, StarfieldComponent, TransformComponent, UIZoneComponent } from '../../engine/CustomRenderer'
 import { SphereColliderComponent } from '../../engine/CustomCollider'
 import { StarfieldGeometry } from '../../engine/geometries/StarfieldGeometry'
 // import { Matrix4 } from '@taoro/math-matrix4'
@@ -17,7 +17,7 @@ function createComponents(body) {
       orbitId,
       {
         largeScalePosition: vec3.fromValues(
-          body
+          0, 0, 0
         )
       }
     )
@@ -41,22 +41,31 @@ function createComponents(body) {
         }
       )
       mat4.translate(
-        transformComponent.matrix,
-        transformComponent.matrix,
+        transformComponent.largeScaleMatrix,
+        transformComponent.largeScaleMatrix,
         transformComponent.largeScalePosition
       )
-      if (['body','zone'].includes(orbitObject.type)) {
+      if (orbitObject.type === 'body') {
         new ImposterComponent(
           orbitObjectId,
           orbitObject.content
         )
-      }
-
-      if (orbitObject.type === 'zone') {
         new SphereColliderComponent(
           orbitObjectId,
           {
-            radius: orbitObject.content.radius,
+            radius: orbitObject.content.radius + 0.1
+          }
+        )
+      }
+
+      if (orbitObject.type === 'zone') {
+        new UIZoneComponent(
+          orbitObjectId
+        )
+        new SphereColliderComponent(
+          orbitObjectId,
+          {
+            radius: 0.1,
           }
         )
       }

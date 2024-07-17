@@ -29,3 +29,17 @@ pnpm link --global @taoro/webgl
 pnpm install
 pnpm run dev
 ```
+
+## Generar modelos
+
+Si quieres exportar un único modelo, se puede hacer con el comando:
+
+```sh
+blender --background --python scripts/export.py -- models/basic-ship.blend
+```
+
+Para exportar todos los modelos de la carpeta `public/models`:
+
+```sh
+pnpm run models:export
+```

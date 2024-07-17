@@ -47,6 +47,11 @@ async function start() {
   const game = new Game(canvas)
 
   await game.resources.load('models/asteroide-peque.blend.json')
+  await game.resources.load('models/asteroide-mediano.blend.json')
+  await game.resources.load('models/asteroide-grande.blend.json')
+  await game.resources.load('models/asteroide-peque.blend.json')
+  await game.resources.load('models/asteroide-peque.blend.json')
+  await game.resources.load('models/asteroide-peque.blend.json')
 
   // const audio3D = new Audio3D(game.audio)
   const customRenderer = new CustomRenderer(canvas)
@@ -133,6 +138,13 @@ async function start() {
           [
             [InputDevice.KEYBOARD, ['KeyX']],
             [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 6]],
+          ],
+        ],
+        [
+          'fsd',
+          [
+            [InputDevice.KEYBOARD, ['KeyQ']],
+            [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 1]],
           ],
         ],
       ]

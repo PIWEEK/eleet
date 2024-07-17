@@ -2,7 +2,7 @@ import { Component } from '@taoro/component'
 // import { Matrix4 } from '@taoro/math-matrix4'
 // import { Vector3 } from '@taoro/math-vector3'
 import WebGL from '@taoro/webgl'
-import { mat4, vec3, quat } from 'gl-matrix'
+import { mat4, vec4, vec3, quat } from 'gl-matrix'
 import shaders from './shaders'
 import PerspectiveProjection from './PerspectiveProjection'
 import { Body } from '../game/models/Body'
@@ -165,21 +165,27 @@ export class TransformComponent extends Component {
   static UP = vec3.fromValues(0, 1, 0)
   static FORWARD = vec3.fromValues(0, 0, 1)
 
-  #linkedObject = null
+  #parentTransform = null
 
   #rotationMatrix = mat4.create()
   #positionMatrix = mat4.create()
+  #largeScaleMatrix = mat4.create()
+  #smallScaleMatrix = mat4.create()
+
+  // TODO: Hacen falta dos matrices, la largeScaleMatrix
+  // y la smallScaleMatrix.
   #matrix = mat4.create()
 
   #largeScalePosition = vec3.create()
   #smallScalePosition = vec3.create()
+  #projectedPosition = vec4.create()
 
   #up = vec3.create()
   #forward = vec3.create()
 
   constructor(id, options) {
     super(id)
-    this.#linkedObject = options?.linkedObject ?? null
+    this.#parentTransform = options?.parentTransform ?? null
     this.#largeScalePosition = options?.largeScalePosition ?? vec3.create()
     this.#smallScalePosition = options?.smallScalePosition ?? vec3.create()
   }
@@ -187,8 +193,8 @@ export class TransformComponent extends Component {
   get up() { return this.#up }
   get forward() { return this.#forward }
 
-  get linkedObject() {
-    return this.#linkedObject
+  get parentTransform() {
+    return this.#parentTransform
   }
 
   get positionMatrix() {
@@ -203,6 +209,14 @@ export class TransformComponent extends Component {
     return this.#matrix
   }
 
+  get largeScaleMatrix() {
+    return this.#largeScaleMatrix
+  }
+
+  get smallScaleMatrix() {
+    return this.#smallScaleMatrix
+  }
+
   get largeScalePosition() {
     return this.#largeScalePosition
   }
@@ -210,26 +224,36 @@ export class TransformComponent extends Component {
   get smallScalePosition() {
     return this.#smallScalePosition
   }
+
+  get projectedPosition() {
+    return this.#projectedPosition
+  }
+}
+
+export class UIZoneComponent extends Component {
+  constructor(id, options) {
+    super(id)
+  }
 }
 
 export class UITextComponent extends Component {
-    #text = null
+    #text = ''
     #x = 0
     #y = 0
     #font = '16px monospace'
     #textAlign = 'left'
     #textBaseline = 'top'
-    #fillStyle = 'black'
+    #fillStyle = 'white'
 
-    constructor(id, text, x ,y, font, textAlign, textBaseline, fillStyle) {
+    constructor(id, options) {
       super(id)
-      this.#text = text
-      this.#x = x
-      this.#y = y
-      this.#font = font
-      this.#textAlign = textAlign
-      this.#textBaseline = textBaseline
-      this.#fillStyle = fillStyle
+      this.#text = options?.text
+      this.#x = options?.x ?? 0
+      this.#y = options?.y ?? 0
+      this.#font = options?.font ?? '16px monospace'
+      this.#textAlign = options?.textAlign ?? 'left'
+      this.#textBaseline = options?.textBaseline ?? 'top'
+      this.#fillStyle = options?.fillStyle ?? 'white'
     }
 
     get text() { return this.#text}
@@ -443,7 +467,7 @@ export class CustomRenderer {
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
-        transform.matrix
+        transform.largeScaleMatrix
       )
 
       gl.uniformMatrix4fv(
@@ -503,7 +527,7 @@ export class CustomRenderer {
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
-        transform.matrix
+        transform.largeScaleMatrix
       )
       gl.uniformMatrix4fv(
         gl.getUniformLocation(
@@ -537,9 +561,9 @@ export class CustomRenderer {
       // porque realmente la rotación y la posición de la cámara
       // se puede extraer de la matriz de transformación de la
       // cámara.
-      mat4.getRotation(cameraRotation, cameraTransform.matrix)
-      mat4.getTranslation(position, transform.matrix)
-      mat4.getTranslation(cameraPosition, cameraTransform.matrix)
+      mat4.getRotation(cameraRotation, cameraTransform.largeScaleMatrix)
+      mat4.getTranslation(position, transform.largeScaleMatrix)
+      mat4.getTranslation(cameraPosition, cameraTransform.largeScaleMatrix)
       mat4.fromRotationTranslation(this.#model, cameraRotation, position)
 
       // mat4.targetTo(this.#model, position, cameraPosition, vec3.fromValues(0, 1, 0))
@@ -703,20 +727,42 @@ export class CustomRenderer {
       mesh.geometry.createVertexArrayObject(gl)
     }
 
-    mat4.multiply(
-      this.#projectionViewModel,
-      camera.projectionViewMatrix,
-      mat4.create()
-    )
+    const transform = Component.findByIdAndConstructor(mesh.id, TransformComponent)
+    if (transform) {
 
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(
-        this.#programs.get('mesh'),
-        'u_modelViewProjection'
-      ),
-      false,
-      this.#projectionViewModel
-    )
+      mat4.multiply(
+        this.#projectionViewModel,
+        camera.projectionViewMatrix,
+        transform.largeScaleMatrix
+      )
+
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(
+          this.#programs.get('mesh'),
+          'u_modelViewProjection'
+        ),
+        false,
+        this.#projectionViewModel
+      )
+
+    } else {
+
+      mat4.multiply(
+        this.#projectionViewModel,
+        camera.projectionViewMatrix,
+        mat4.create()
+      )
+
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(
+          this.#programs.get('mesh'),
+          'u_modelViewProjection'
+        ),
+        false,
+        this.#projectionViewModel
+      )
+
+    }
 
     this.#renderMeshSolid(gl, camera, cameraTransform, mesh)
     this.#renderMeshLines(gl, camera, cameraTransform, mesh)
@@ -783,7 +829,9 @@ export class CustomRenderer {
     if (meshes) {
       this.#renderMeshes(gl, camera, cameraTransform, meshes)
     }
+  }
 
+  #renderIndependentScale(gl, camera, cameraTransform) {
     const dusts = Component.findByConstructor(DustComponent)
     if (dusts) {
       this.#renderDusts(gl, camera, cameraTransform, dusts)
@@ -800,7 +848,55 @@ export class CustomRenderer {
    *
    * @param {CameraComponent} camera
    */
-  #computeViewMatrices(camera, cameraTransform) {
+  #computeLargeScaleViewMatrices(camera, cameraTransform) {
+    mat4.identity(this.#model)
+
+    mat4.invert(camera.viewMatrix, cameraTransform.largeScaleMatrix)
+
+    mat4.multiply(
+      camera.projectionViewMatrix,
+      camera.projection.matrix,
+      camera.viewMatrix
+    )
+
+    mat4.multiply(
+      this.#projectionViewModel,
+      camera.projectionViewMatrix,
+      this.#model
+    )
+  }
+
+  /**
+   * Calculamos las matrices de la vista que se reutilizarán
+   * en las siguientes vistas.
+   *
+   * @param {CameraComponent} camera
+   */
+  #computeSmallScaleViewMatrices(camera, cameraTransform) {
+    mat4.identity(this.#model)
+
+    mat4.invert(camera.viewMatrix, cameraTransform.smallScaleMatrix)
+
+    mat4.multiply(
+      camera.projectionViewMatrix,
+      camera.projection.matrix,
+      camera.viewMatrix
+    )
+
+    mat4.multiply(
+      this.#projectionViewModel,
+      camera.projectionViewMatrix,
+      this.#model
+    )
+  }
+
+  /**
+   * Calculamos las matrices de la vista que se reutilizarán
+   * en las siguientes vistas.
+   *
+   * @param {CameraComponent} camera
+   */
+  #computeIndependentScaleViewMatrices(camera, cameraTransform) {
     mat4.identity(this.#model)
 
     mat4.invert(camera.viewMatrix, cameraTransform.matrix)
@@ -828,10 +924,50 @@ export class CustomRenderer {
     const aspectRatio = this.#canvas.width / this.#canvas.height
     camera.projection.aspectRatio = aspectRatio
 
-    this.#computeViewMatrices(camera, cameraTransform)
-
+    this.#computeLargeScaleViewMatrices(camera, cameraTransform)
     this.#renderLargeScale(gl, camera, cameraTransform)
+
+    this.#computeSmallScaleViewMatrices(camera, cameraTransform)
     this.#renderSmallScale(gl, camera, cameraTransform)
+
+    this.#computeIndependentScaleViewMatrices(camera, cameraTransform)
+    this.#renderIndependentScale(gl, camera, cameraTransform)
+  }
+
+  #renderUIZone(gl, context, camera, cameraTransform, zone) {
+    const transform = Component.findByIdAndConstructor(zone.id, TransformComponent)
+    if (!transform) return
+
+    mat4.identity(this.#model)
+    mat4.invert(camera.viewMatrix, cameraTransform.largeScaleMatrix)
+    mat4.multiply(
+      camera.projectionViewMatrix,
+      camera.projection.matrix,
+      camera.viewMatrix
+    )
+
+    vec3.transformMat4(
+      transform.projectedPosition,
+      transform.largeScalePosition,
+      camera.projectionViewMatrix
+    )
+
+    if (transform.projectedPosition[2] > 1)
+      return
+
+    const x = (1 + (transform.projectedPosition[0] / transform.projectedPosition[2])) / 2 * context.canvas.width
+    const y = (1 + (transform.projectedPosition[1] / -transform.projectedPosition[2])) / 2 * context.canvas.height
+
+    context.strokeStyle = '#fff'
+    context.setLineDash([4, 4])
+    context.beginPath()
+    context.arc(x, y, 32, 0, Math.PI * 2)
+    context.stroke()
+    context.font = '16px monospace'
+    context.textAlign = 'center'
+    context.textBaseline = 'center'
+    context.fillStyle = 'white'
+    context.fillText('ZONE', x, y)
   }
 
   #renderUIText(gl, context, text) {
@@ -842,9 +978,16 @@ export class CustomRenderer {
     context.fillText(text.text, text.x, text.y)
   }
 
-  #renderUI(gl, context) {
+  #renderUI(gl, camera, cameraTransform, context) {
     context.clearRect(0, 0,context.canvas.width, context.canvas.height)
-    const uiTexts = Component.findByConstructor(UITextComponent);
+    const uiZones = Component.findByConstructor(UIZoneComponent)
+    if (uiZones) {
+      for (const uiZone of uiZones) {
+        this.#renderUIZone(gl, context, camera, cameraTransform, uiZone)
+      }
+    }
+
+    const uiTexts = Component.findByConstructor(UITextComponent)
     if (uiTexts) {
       for (const uiText of uiTexts) {
         this.#renderUIText(gl, context, uiText)
@@ -872,16 +1015,18 @@ export class CustomRenderer {
     gl.viewport(0, 0, this.#canvas.width, this.#canvas.height)
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.enable(gl.DEPTH_TEST)
-    // gl.disable(gl.CULL_FACE)
-    for (const camera of Component.findByConstructor(CameraComponent)) {
-      const cameraTransform = Component.findByIdAndConstructor(
-        camera.id,
-        TransformComponent
-      )
-      this.#renderView(gl, camera, cameraTransform)
+    const cameras = Component.findByConstructor(CameraComponent)
+    if (cameras) {
+      for (const camera of cameras) {
+        gl.enable(gl.DEPTH_TEST)
+        const cameraTransform = Component.findByIdAndConstructor(
+          camera.id,
+          TransformComponent
+        )
+        this.#renderView(gl, camera, cameraTransform)
+        gl.disable(gl.DEPTH_TEST)
+        this.#renderUI(gl, camera, cameraTransform, this.#ui.context)
+      }
     }
-    gl.disable(gl.DEPTH_TEST)
-    this.#renderUI(gl, this.#ui.context)
   }
 }

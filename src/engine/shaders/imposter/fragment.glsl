@@ -199,10 +199,12 @@ vec4 renderSun(vec2 pos, vec4 color) {
 
     vec3 light = vec3(cos(u_time), .0, sin(u_time));
     float apos = atan(pos.y, pos.x);
-    vec3 norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+    vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+    vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
+
     vec2 tpos = vec2(
-      atan(norm.z, norm.x) / TAU,
-      asin(norm.y) / TAU
+      atan(relative_norm.z, relative_norm.x) / TAU,
+      asin(relative_norm.y) / TAU
     );
 
     vec2 tdpos0 = vec2(
@@ -221,7 +223,7 @@ vec4 renderSun(vec2 pos, vec4 color) {
       tdpos1
     );
 
-    float rx = atan(norm.y, norm.x) / PI;
+    float rx = atan(relative_norm.y, relative_norm.x) / PI;
     float ry = mod(u_time * 0.01, 1.);
     vec2 rpos = vec2(rx, ry);
     vec4 rtex0 = random_texture(
@@ -230,7 +232,7 @@ vec4 renderSun(vec2 pos, vec4 color) {
     vec4 rtex1 = random_texture(
       rpos
     );
-    float incidence = dot(light, norm);
+    float incidence = dot(light, relative_norm);
     float dist = length(pos);
     float ndist = halodist - dist;
     if (dist > halodist) {
@@ -271,6 +273,7 @@ vec4 renderSun(vec2 pos, vec4 color) {
         fragColor += corona;
       }
     } else {
+      /*
     	fragColor = vec4(
             mix(
                 colorWhite * 0.1,
@@ -294,6 +297,8 @@ vec4 renderSun(vec2 pos, vec4 color) {
                 pow(halodist, 0.09)
             )
         );
+      */
+      fragColor = colorWhite;
     }
     float brightness = (fragColor.x + fragColor.y + fragColor.z) / 3.0;
     return vec4(color) * dither8x8(gl_FragCoord.xy, brightness);

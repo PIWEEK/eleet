@@ -1,8 +1,9 @@
 // import { Matrix4 } from '@taoro/math-matrix4'
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
-import { SphereColliderComponent } from '../../engine/CustomCollider'
+import { ColliderScale, SphereColliderComponent } from '../../engine/CustomCollider'
 import { CameraComponent, TransformComponent, UITextComponent } from '../../engine/CustomRenderer'
+import { Zone } from './Zone'
 
 /**
  * Jugador
@@ -14,22 +15,21 @@ export function * Player(game) {
   // dos sistemas de coordenadas. Las coordenadas "large scale"
   // y las coordenadas "small scale.".
   const transform = new TransformComponent('player', {
-    largeScalePosition: vec3.fromValues(-1, -1, -1)
+    largeScalePosition: vec3.fromValues(-10, -10, -10)
   })
   const camera = new CameraComponent('player')
   const collider = new SphereColliderComponent('player', {
     radius: 0.5
   })
-  const speedUIText = new UITextComponent('player',
-    'HOLA',
-    0,
-    0,
-    '120px monospace',
-    'left',
-    'top',
-    'pink'
+  const speedUIText = new UITextComponent(
+    'player',
+    {
+      text: 'HOLA',
+    }
   )
 
+  // TODO: Todo esto habría que meterlo en un componente
+  //       que controle el sistema de vuelo.
   const velocity = vec3.create()
 
   const angularAcceleration = vec3.fromValues(
@@ -50,18 +50,26 @@ export function * Player(game) {
     0,
   )
 
-  let flightMode = 'large-scale'
+  let flightScale = 'large-scale'
+  let currentZone = null
 
   let rotateX = 0
   let rotateY = 0
   let rotateZ = 0
 
   while (true) {
-    if (collider.collisions.size > 0) {
+    if (collider.collisions.size > 0 && flightScale === 'large-scale') {
       // console.log('CHOCÓ!')
       for (const [otherCollider, scale] of collider.collisions) {
         console.log('collision', otherCollider, scale)
-        flightMode = 'small-scale'
+
+        collider.scale = ColliderScale.SMALL
+
+        flightScale = 'small-scale'
+
+        currentZone = Zone(game, otherCollider)
+
+        game.scheduler.add(currentZone)
       }
     }
 
@@ -112,16 +120,39 @@ export function * Player(game) {
 
     vec3.copy(velocity, transform.forward)
     vec3.scale(velocity, velocity, linearVelocity[2])
-    vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
 
-    mat4.identity(transform.positionMatrix)
-    mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
+    if (flightScale === 'large-scale') {
+      vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
 
-    mat4.identity(transform.matrix)
-    mat4.multiply(transform.matrix, transform.matrix, transform.positionMatrix)
-    mat4.multiply(transform.matrix, transform.matrix, transform.rotationMatrix)
+      mat4.identity(transform.positionMatrix)
+      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
 
-    speedUIText.text = velocity[2];
+      mat4.identity(transform.largeScaleMatrix)
+      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.positionMatrix)
+      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.rotationMatrix)
+
+      mat4.copy(transform.matrix, transform.largeScaleMatrix)
+    } else {
+      vec3.add(transform.smallScalePosition, transform.smallScalePosition, velocity)
+
+      mat4.identity(transform.positionMatrix)
+      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
+
+      mat4.identity(transform.largeScaleMatrix)
+      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.positionMatrix)
+      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.rotationMatrix)
+
+      mat4.identity(transform.positionMatrix)
+      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.smallScalePosition)
+
+      mat4.identity(transform.smallScaleMatrix)
+      mat4.multiply(transform.smallScaleMatrix, transform.smallScaleMatrix, transform.positionMatrix)
+      mat4.multiply(transform.smallScaleMatrix, transform.smallScaleMatrix, transform.rotationMatrix)
+
+      mat4.copy(transform.matrix, transform.smallScaleMatrix)
+    }
+
+    speedUIText.text = flightScale;
     yield
   }
 
