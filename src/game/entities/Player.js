@@ -13,7 +13,9 @@ export function * Player(game) {
   // TODO: Todos los objetos del universo necesitan
   // dos sistemas de coordenadas. Las coordenadas "large scale"
   // y las coordenadas "small scale.".
-  const transform = new TransformComponent('player')
+  const transform = new TransformComponent('player', {
+    largeScalePosition: vec3.fromValues(-1, -1, -1)
+  })
   const camera = new CameraComponent('player')
   const collider = new SphereColliderComponent('player', {
     radius: 0.5
@@ -59,6 +61,7 @@ export function * Player(game) {
       // console.log('CHOCÓ!')
       for (const [otherCollider, scale] of collider.collisions) {
         console.log('collision', otherCollider, scale)
+        flightMode = 'small-scale'
       }
     }
 

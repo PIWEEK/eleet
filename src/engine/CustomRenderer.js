@@ -149,9 +149,7 @@ export class ImposterComponent extends Component {
 
   get body() { return this.#body }
 
-  get type() {
-    return 1
-  }
+  get type() { return this.#body.type }
 
   get radius() {
     return this.#body?.radius ?? 5
@@ -440,6 +438,24 @@ export class CustomRenderer {
   }
 
   #renderOrbit(gl, camera, cameraTransform, orbit) {
+    const transform = Component.findByIdAndConstructor(orbit.id, TransformComponent)
+    if (transform) {
+      mat4.multiply(
+        this.#projectionViewModel,
+        camera.projectionViewMatrix,
+        transform.matrix
+      )
+
+      gl.uniformMatrix4fv(
+        gl.getUniformLocation(
+          this.#programs.get('orbit'),
+          'u_modelViewProjection'
+        ),
+        false,
+        this.#projectionViewModel
+      )
+    }
+
     const total = 100
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_total'),
@@ -450,6 +466,31 @@ export class CustomRenderer {
       orbit.semiMajorAxis
     )
     gl.drawArrays(gl.LINE_LOOP, 0, total)
+  }
+
+  #renderOrbits(gl, camera, cameraTransform, orbits) {
+    if (!globalThis.debugRenderer.orbits) return
+    gl.useProgram(this.#programs.get('orbit'))
+
+    /*
+    mat4.multiply(
+      this.#projectionViewModel,
+      camera.projectionViewMatrix,
+      mat4.create()
+    )
+
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(
+        this.#programs.get('orbit'),
+        'u_modelViewProjection'
+      ),
+      false,
+      this.#projectionViewModel
+    )
+    */
+    for (const orbit of orbits) {
+      this.#renderOrbit(gl, camera, cameraTransform, orbit)
+    }
   }
 
   #renderRing(gl, camera, cameraTransform, ring) {
@@ -492,6 +533,10 @@ export class CustomRenderer {
       const cameraPosition = vec3.create()
       const position = vec3.create()
 
+      // FIXME: Sacar este cálculo a #computeViewMatrices
+      // porque realmente la rotación y la posición de la cámara
+      // se puede extraer de la matriz de transformación de la
+      // cámara.
       mat4.getRotation(cameraRotation, cameraTransform.matrix)
       mat4.getTranslation(position, transform.matrix)
       mat4.getTranslation(cameraPosition, cameraTransform.matrix)
@@ -530,7 +575,7 @@ export class CustomRenderer {
       )
     }
     const colors = {
-      [Body]: [1, 0, 0, 1],
+      [Body]: [1, 1, 1, 1],
       [Ring]: [0, 1, 0, 1],
       [Zone]: [0, 0, 1, 1]
     }
@@ -541,11 +586,11 @@ export class CustomRenderer {
     )
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_type'),
-      1
+      imposter.type
     )
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_time'),
-      performance.now() / 100
+      Date.now()
     )
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_size'),
@@ -559,29 +604,6 @@ export class CustomRenderer {
     if (!globalThis.debugRenderer.starfields) return
     for (const starfield of starfields) {
       this.#renderStarfield(gl, camera, cameraTransform, starfield)
-    }
-  }
-
-  #renderOrbits(gl, camera, cameraTransform, orbits) {
-    if (!globalThis.debugRenderer.orbits) return
-    gl.useProgram(this.#programs.get('orbit'))
-
-    mat4.multiply(
-      this.#projectionViewModel,
-      camera.projectionViewMatrix,
-      mat4.create()
-    )
-
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(
-        this.#programs.get('orbit'),
-        'u_modelViewProjection'
-      ),
-      false,
-      this.#projectionViewModel
-    )
-    for (const orbit of orbits) {
-      this.#renderOrbit(gl, camera, cameraTransform, orbit)
     }
   }
 

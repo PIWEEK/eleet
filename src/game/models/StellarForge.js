@@ -1,6 +1,6 @@
 import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-lcg'
-import { Body } from './Body'
+import { Body, BodyType } from './Body'
 import { Ring } from './Ring'
 import { Orbit } from './Orbit'
 import { OrbitContent } from './OrbitContent'
@@ -44,6 +44,7 @@ export class StellarForge {
     switch (type) {
       case 'body':
         return new Body({
+          type: BodyType.PLANET,
           seed: random.seed,
           // Devuelve un planeta entre el tamaño de mercurio
           // y el tamaño de jupiter.
@@ -64,7 +65,7 @@ export class StellarForge {
     }
   }
 
-  static #createBodyOrbits(random, body, maxDepth = 1, depth = 0) {
+  static #createBodyOrbits(random, body, maxDepth = 0, depth = 0) {
     const numOrbits = random.intBetween(5, 9)
     for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
       const orbit = new Orbit({

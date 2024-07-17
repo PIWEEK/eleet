@@ -1,3 +1,8 @@
+export const BodyType = {
+  STAR: 0,
+  PLANET: 1
+}
+
 export class Body {
   /**
    * Semilla del cuerpo.
@@ -5,6 +10,13 @@ export class Body {
    * @type {number}
    */
   #seed = 0
+
+  /**
+   * Tipo de cuerpo.
+   *
+   * @type {}
+   */
+  #type = BodyType.STAR
 
   /**
    * Tamaño del cuerpo.
@@ -36,9 +48,14 @@ export class Body {
    * @param {Orbit|null} orbit Órbita a la que pertenece el cuerpo.
    */
   constructor(options) {
+    this.#type = options?.type ?? BodyType.STAR
     this.#seed = options?.seed
     this.#orbitContent = options?.orbit
     this.#radius = options?.radius
+  }
+
+  get type() {
+    return this.#type
   }
 
   /**
