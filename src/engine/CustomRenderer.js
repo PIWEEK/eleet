@@ -160,6 +160,8 @@ export class ImposterComponent extends Component {
  * que sólo tiene uno.
  */
 export class TransformComponent extends Component {
+  #linkedObject = null
+
   #rotationMatrix = mat4.create()
   #positionMatrix = mat4.create()
   #matrix = mat4.create()
@@ -169,8 +171,13 @@ export class TransformComponent extends Component {
 
   constructor(id, options) {
     super(id)
+    this.#linkedObject = options?.linkedObject ?? null
     this.#largeScalePosition = options?.largeScalePosition ?? vec3.create()
     this.#smallScalePosition = options?.smallScalePosition ?? vec3.create()
+  }
+
+  get linkedObject() {
+    return this.#linkedObject
   }
 
   get positionMatrix() {
@@ -197,12 +204,12 @@ export class TransformComponent extends Component {
 export class UITextComponent extends Component {
     #text = null
     #x = 0
-    #y = 0  
+    #y = 0
     #font = '16px monospace'
     #textAlign = 'left'
     #textBaseline = 'top'
     #fillStyle = 'black'
-  
+
     constructor(id, text, x ,y, font, textAlign, textBaseline, fillStyle) {
       super(id)
       this.#text = text
@@ -215,12 +222,12 @@ export class UITextComponent extends Component {
     }
 
     get text() { return this.#text}
-    get x() { return this.#x} 
-    get y() { return this.#y} 
-    get font() { return this.#font} 
-    get textAlign() { return this.#textAlign } 
-    get textBaseline() { return this.#textBaseline } 
-    get fillStyle() { return this.#fillStyle } 
+    get x() { return this.#x}
+    get y() { return this.#y}
+    get font() { return this.#font}
+    get textAlign() { return this.#textAlign }
+    get textBaseline() { return this.#textBaseline }
+    get fillStyle() { return this.#fillStyle }
     set text(newText) {this.#text = newText }
   }
 
@@ -416,14 +423,20 @@ export class CustomRenderer {
   }
 
   #renderOrbit(gl, camera, cameraTransform, orbit) {
+    const total = 100
+    gl.uniform1i(
+      gl.getUniformLocation(this.#programs.get('orbit'), 'u_total'),
+      total,
+    )
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_radius'),
       orbit.semiMajorAxis
     )
-    gl.drawArrays(gl.LINE_LOOP, 0, 1000)
+    gl.drawArrays(gl.LINE_LOOP, 0, total)
   }
 
   #renderRing(gl, camera, cameraTransform, ring) {
+    const total = 100
     const transform = Component.findByIdAndConstructor(
       ring.id,
       TransformComponent
@@ -443,12 +456,16 @@ export class CustomRenderer {
         this.#projectionViewModel
       )
     }
+    gl.uniform1i(
+      gl.getUniformLocation(this.#programs.get('ring'), 'u_radius'),
+      total
+    )
     gl.uniform2f(
-    gl.getUniformLocation(this.#programs.get('ring'), 'u_radius'),
+      gl.getUniformLocation(this.#programs.get('ring'), 'u_radius'),
       ring.innerRadius,
       ring.outerRadius
     )
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 1000)
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, total)
   }
 
   #renderImposter(gl, camera, cameraTransform, imposter) {
@@ -482,6 +499,14 @@ export class CustomRenderer {
     gl.uniform4f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_color'),
       r, g, b, a
+    )
+    gl.uniform1i(
+      gl.getUniformLocation(this.#programs.get('imposter'), 'u_type'),
+      1
+    )
+    gl.uniform1f(
+      gl.getUniformLocation(this.#programs.get('imposter'), 'u_time'),
+      performance.now() / 100
     )
     gl.uniform1f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_size'),

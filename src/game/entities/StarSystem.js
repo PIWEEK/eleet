@@ -1,19 +1,25 @@
 import { DustComponent, RingComponent, ImposterComponent, OrbitComponent, StarfieldComponent, TransformComponent } from '../../engine/CustomRenderer'
 import { SphereColliderComponent } from '../../engine/CustomCollider'
 import { StarfieldGeometry } from '../../engine/geometries/StarfieldGeometry'
-import { Ring } from '../models/Ring'
 // import { Matrix4 } from '@taoro/math-matrix4'
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
 
 function createComponents(body) {
-  // TODO: Crear todos los componentes a partir de la estrella.
   for (let orbitIndex = 0; orbitIndex < body.orbits.length; orbitIndex++) {
     const orbit = body.orbits[orbitIndex]
-    // OrbitComponent pinta los components
+    const orbitId = `orbit_${orbitIndex}`
     const orbitComponent = new OrbitComponent(
-      `orbit_${orbitIndex}`,
+      orbitId,
       body.orbits[orbitIndex]
+    )
+    const transformComponent = new TransformComponent(
+      orbitId,
+      {
+        largeScalePosition: vec3.fromValues(
+          body
+        )
+      }
     )
     console.log('orbit', orbit, orbitComponent)
     for (
@@ -23,8 +29,9 @@ function createComponents(body) {
     ) {
       const orbitObject = orbit.orbitObjects[orbitObjectIndex]
       console.log('suborbits', orbit, orbitObject, orbitObjectIndex)
+      const orbitObjectId = `orbit_${orbitIndex}_${orbitObjectIndex}`
       const transformComponent = new TransformComponent(
-        `orbit_${orbitIndex}_${orbitObjectIndex}`,
+        orbitObjectId,
         {
           largeScalePosition: vec3.fromValues(
             orbitObject.x,
@@ -40,16 +47,29 @@ function createComponents(body) {
       )
       if (['body','zone'].includes(orbitObject.type)) {
         new ImposterComponent(
-          `orbit_${orbitIndex}_${orbitObjectIndex}`,
+          orbitObjectId,
           orbitObject.content
+        )
+      }
+
+      if (orbitObject.type === 'zone') {
+        new SphereColliderComponent(
+          orbitObjectId,
+          {
+            radius: orbitObject.content.radius,
+          }
         )
       }
 
       if (orbitObject.type === 'ring') {
         new RingComponent(
-          `orbit_${orbitIndex}_${orbitObjectIndex}`,
+          orbitObjectId,
           orbitObject.content
         )
+      }
+
+      if (orbitObject.type === 'body') {
+        createComponents(orbitObject.content)
       }
     }
   }
@@ -66,14 +86,6 @@ export function * StarSystem(game, star) {
   const colliderStar = new SphereColliderComponent('imposter_star', {
     radius: star.radius * 1.5
   })
-
-  new RingComponent(
-    'ring',
-    new Ring({
-      innerRadius: 5,
-      outerRadius: 6,
-    })
-  )
 
   const dustComponent = new DustComponent('dust')
   createComponents(star)

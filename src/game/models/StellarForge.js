@@ -64,7 +64,7 @@ export class StellarForge {
     }
   }
 
-  static #createBodyOrbits(random, body, maxDepth = 2, depth = 0) {
+  static #createBodyOrbits(random, body, maxDepth = 1, depth = 0) {
     const numOrbits = random.intBetween(5, 9)
     for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
       const orbit = new Orbit({

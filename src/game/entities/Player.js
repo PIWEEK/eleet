@@ -62,6 +62,9 @@ export function * Player(game) {
   while (true) {
     if (collider.collisions.size > 0) {
       // console.log('CHOCÓ!')
+      for (const [otherCollider, scale] of collider.collisions) {
+        console.log('collision', otherCollider, scale)
+      }
     }
 
     if (game.input.stateOf(0, 'throttle-up')) {

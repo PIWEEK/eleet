@@ -41,6 +41,9 @@ export class Body {
     this.#radius = options?.radius
   }
 
+  /**
+   * @type {number}
+   */
   get radius() {
     return this.#radius
   }
