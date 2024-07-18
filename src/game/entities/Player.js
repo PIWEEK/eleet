@@ -11,6 +11,19 @@ import { UITextComponent } from '../../engine/renderer/components/UITextComponen
 import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
 
 import { Zone } from './Zone'
+import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'
+
+function getCurrentDate() {
+  const date = new Date()
+  return new Date(
+    date.getFullYear() + 100,
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds()
+  )
+}
 
 /**
  * Jugador
@@ -28,12 +41,60 @@ export function * Player(game) {
   const collider = new SphereColliderComponent('player', {
     radius: 0.5
   })
-  const speedUIText = new UITextComponent(
-    'player',
+
+  const dateText = new UITextComponent(
+    'player_date',
     {
-      text: 'HOLA',
+      text: ''
     }
   )
+
+  const velocityText = new UITextComponent('player_vel', {
+    y: 20,
+    text: 'HOLA',
+  })
+
+  const frontRadar = new UIImageComponent('player_front_radar', {
+    anchor: UIImageAnchor.LEFT_TOP,
+    dx: 20,
+    dy: 20,
+    image: game.resources.get('images/front.png')
+  })
+
+  const rearRadar = new UIImageComponent('player_rear_radar', {
+    anchor: UIImageAnchor.RIGHT_TOP,
+    dx: 20,
+    dy: 20,
+    image: game.resources.get('images/rear.png'),
+  })
+
+  const cross = new UIImageComponent('player_cross', {
+    anchor: UIImageAnchor.CENTER,
+    dx: 0,
+    dy: 0,
+    image: game.resources.get('images/cross.png'),
+  })
+
+  const shipInfo = new UIImageComponent('player_ship_info', {
+    anchor: UIImageAnchor.LEFT_BOTTOM,
+    dx: 20,
+    dy: 20,
+    image: game.resources.get('images/ship-info.png'),
+  })
+
+  const engine = new UIImageComponent('player_engine', {
+    anchor: UIImageAnchor.RIGHT_BOTTOM,
+    dx: 20,
+    dy: 20,
+    image: game.resources.get('images/engine.png'),
+  })
+
+  const weapons = new UIImageComponent('player_weapons', {
+    anchor: UIImageAnchor.RIGHT_BOTTOM,
+    dx: 200,
+    dy: 20,
+    image: game.resources.get('images/weapons.png'),
+  })
 
   // TODO: Todo esto habría que meterlo en un componente
   //       que controle el sistema de vuelo.
@@ -201,7 +262,8 @@ export function * Player(game) {
       mat4.copy(transform.matrix, transform.smallScaleMatrix)
     }
 
-    speedUIText.text = linearVelocity[2];
+    dateText.text = getCurrentDate()
+    velocityText.text = `${(-linearVelocity[2] * 10000).toFixed(2)}m/s`;
     yield
   }
 

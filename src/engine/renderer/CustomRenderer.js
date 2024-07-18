@@ -16,6 +16,7 @@ import { MeshComponent } from './components/MeshComponent'
 import { DustComponent } from './components/DustComponent'
 import { UIZoneComponent } from './components/UIZoneComponent'
 import { UITextComponent } from './components/UITextComponent'
+import { UIImageAnchor, UIImageComponent } from './components/UIImageComponent'
 
 /**
  * Renderizador custom para el juego.
@@ -83,6 +84,7 @@ export class CustomRenderer {
       ui: {
         zones: true,
         texts: true,
+        images: true
       },
     }
 
@@ -751,11 +753,80 @@ export class CustomRenderer {
     }
   }
 
+  #renderUIImage(gl, context, image) {
+    let x = 0, y = 0
+    switch (image.anchor) {
+      case UIImageAnchor.LEFT_TOP:
+        x = image.dx
+        y = image.dy
+        break
+
+      case UIImageAnchor.RIGHT_TOP:
+        x = context.canvas.width - image.image.width - image.dx
+        y = image.dy
+        break
+
+      case UIImageAnchor.LEFT_BOTTOM:
+        x = image.dx
+        y = context.canvas.height - image.image.height - image.dy
+        break
+
+      case UIImageAnchor.RIGHT_BOTTOM:
+        x = context.canvas.width - image.image.width - image.dx
+        y = context.canvas.height - image.image.height - image.dy
+        break
+
+      case UIImageAnchor.TOP:
+        x = (context.canvas.width - image.image.width) / 2 + image.dx
+        y = image.dy
+        break
+
+      case UIImageAnchor.BOTTOM:
+        x = (context.canvas.width - image.image.width) / 2 + image.dx
+        y = context.canvas.height - image.image.height - image.dy
+        break
+
+      case UIImageAnchor.LEFT:
+        x = image.dx
+        y = (context.canvas.height - image.image.height) / 2 + image.dy
+        break
+
+      case UIImageAnchor.RIGHT:
+        x = context.canvas.width - image.image.width - image.dx
+        y = (context.canvas.height - image.image.height) / 2 + image.dy
+        break
+
+      default:
+      case UIImageAnchor.CENTER:
+        x = (context.canvas.width - image.image.width) / 2 + image.dx
+        y = (context.canvas.height - image.image.height) / 2 + image.dy
+        break
+
+    }
+
+    console.log(x, y)
+    context.save()
+    context.drawImage(image.image, x, y)
+    context.restore()
+  }
+
+  #renderUIImages(gl, context, images) {
+    if (!globalThis.debugRenderer.ui.images) return
+    for (const image of images) {
+      this.#renderUIImage(gl, context, image)
+    }
+  }
+
   #renderUI(gl, camera, cameraTransform, context) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height)
     const zones = Component.findByConstructor(UIZoneComponent)
     if (zones) {
       this.#renderUIZones(gl, context, camera, cameraTransform, zones)
+    }
+
+    const images = Component.findByConstructor(UIImageComponent)
+    if (images) {
+      this.#renderUIImages(gl, context, images)
     }
 
     const texts = Component.findByConstructor(UITextComponent)

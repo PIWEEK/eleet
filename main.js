@@ -46,6 +46,13 @@ async function start() {
   const canvas = document.querySelector('canvas')
   const game = new Game(canvas)
 
+  await game.resources.load('images/cross.png')
+  await game.resources.load('images/engine.png')
+  await game.resources.load('images/front.png')
+  await game.resources.load('images/rear.png')
+  await game.resources.load('images/weapons.png')
+  await game.resources.load('images/ship-info.png')
+
   await game.resources.load('models/asteroide-peque.blend.json')
   await game.resources.load('models/asteroide-mediano.blend.json')
   await game.resources.load('models/asteroide-grande.blend.json')
