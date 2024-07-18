@@ -2,8 +2,14 @@
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
 import { linear } from '@taoro/math-interpolation'
-import { ColliderScale, SphereColliderComponent } from '../../engine/CustomCollider'
-import { CameraComponent, TransformComponent, UITextComponent } from '../../engine/CustomRenderer'
+import { ColliderScale } from '../../engine/collider/CustomCollider'
+import { SphereColliderComponent } from '../../engine/collider/components/SphereColliderComponent'
+
+import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
+import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
+import { UITextComponent } from '../../engine/renderer/components/UITextComponent'
+import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
+
 import { Zone } from './Zone'
 
 /**

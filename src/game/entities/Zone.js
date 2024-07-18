@@ -16,6 +16,7 @@ export function * Zone(game, zone) {
   const random = new Random(new RandomProvider(zone.seed ?? 0))
   console.log(zone)
   if (zone) {
+    // Esto es la generación de la zona, que le mete unos asteroides y una Station
     const numAsteroids = random.intBetween(50, 100)
     console.log(numAsteroids)
     for (let index = 0; index < numAsteroids; index++) {

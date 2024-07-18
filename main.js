@@ -2,11 +2,11 @@ import './style.css'
 import { Game } from '@taoro/game'
 import { InputDevice, InputKind } from '@taoro/input'
 // import { Audio3D } from '@taoro/audio-3d'
-import { CustomRenderer } from './src/engine/CustomRenderer'
+import { CustomRenderer } from './src/engine/renderer/CustomRenderer'
 import { Player } from './src/game/entities/Player'
 import { StarSystem } from './src/game/entities/StarSystem'
 import { StellarForge } from './src/game/models/StellarForge'
-import CustomCollider from './src/engine/CustomCollider'
+import CustomCollider from './src/engine/collider/CustomCollider'
 import { Asteroid } from './src/game/entities/Asteroid'
 
 class ConfigParams {

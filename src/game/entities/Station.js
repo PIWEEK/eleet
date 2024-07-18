@@ -1,4 +1,5 @@
-import { TransformComponent, MeshComponent } from '../../engine/CustomRenderer'
+import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
+import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
 import MeshGeometry from '../../engine/geometries/MeshGeometry'
 
 export function* Station(game, options) {

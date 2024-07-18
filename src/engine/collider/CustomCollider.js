@@ -1,37 +1,13 @@
 import { Component } from '@taoro/component'
-import { TransformComponent } from './CustomRenderer'
+import { TransformComponent } from '../renderer/components/TransformComponent'
 import { vec3 } from 'gl-matrix'
+import { SphereColliderComponent } from './components/SphereColliderComponent'
+
 
 export const ColliderScale = {
   LARGE: 1,
   SMALL: 2,
   BOTH:  3
-}
-
-export class ColliderComponent extends Component {
-  #scale = ColliderScale.LARGE
-  #collisions = new Map()
-
-  constructor(id, options) {
-    super(id)
-    this.#scale = options?.scale ?? ColliderScale.LARGE
-  }
-
-  get scale() { return this.#scale }
-  set scale(newScale) { this.#scale = newScale }
-  get collisions() { return this.#collisions }
-}
-
-export class SphereColliderComponent extends ColliderComponent {
-  #radius = 1.0
-
-  constructor(id, options) {
-    super(id, options)
-    Component.registerByConstructor(ColliderComponent, this)
-    this.#radius = options?.radius ?? 1.0
-  }
-
-  get radius() { return this.#radius }
 }
 
 /**
