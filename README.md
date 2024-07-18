@@ -18,6 +18,7 @@ pnpm link --global @taoro/component
 pnpm link --global @taoro/component-transform-3d
 pnpm link --global @taoro/game
 pnpm link --global @taoro/input
+pnpm link --global @taoro/math-interpolation
 pnpm link --global @taoro/math-matrix4
 pnpm link --global @taoro/math-random
 pnpm link --global @taoro/math-random-lcg
