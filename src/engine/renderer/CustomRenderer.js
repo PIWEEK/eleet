@@ -15,8 +15,10 @@ import { ImposterComponent } from './components/ImposterComponent'
 import { MeshComponent } from './components/MeshComponent'
 import { DustComponent } from './components/DustComponent'
 import { UIZoneComponent } from './components/UIZoneComponent'
-import { UITextComponent } from './components/UITextComponent'
+import { UITextAnchor, UITextComponent } from './components/UITextComponent'
 import { UIImageAnchor, UIImageComponent } from './components/UIImageComponent'
+import { UIExitComponent } from './components/UIExitComponent'
+import { SphereColliderComponent } from '../collider/components/SphereColliderComponent'
 
 /**
  * Renderizador custom para el juego.
@@ -82,6 +84,7 @@ export class CustomRenderer {
       meshes: true,
       dusts: true,
       ui: {
+        exits: true,
         zones: true,
         texts: true,
         images: true
@@ -743,7 +746,60 @@ export class CustomRenderer {
     context.textAlign = text.textAlign
     context.textBaseline = text.textBaseline
     context.fillStyle = text.fillStyle
-    context.fillText(text.text, text.x, text.y)
+    if (text.anchor) {
+      let x = 0,
+        y = 0
+      switch (text.anchor) {
+        case UITextAnchor.LEFT_TOP:
+          x = text.x
+          y = text.y
+          break
+
+        case UITextAnchor.RIGHT_TOP:
+          x = contet.canvas.width + text.dx
+          y = text.y
+          break
+
+        case UITextAnchor.LEFT_BOTTOM:
+          x = text.x
+          y = context.canvas.height + text.y
+          break
+
+        case UITextAnchor.RIGHT_BOTTOM:
+          x = context.canvas.width + text.x
+          y = context.canvas.height + text.y
+          break
+
+        case UITextAnchor.TOP:
+          x = (contxt.canvas.width) / 2 + text.dx
+          y = text.y
+          break
+
+        case UITextAnchor.BOTTOM:
+          x = (context.canvas.width) / 2 + ext.dx
+          y = context.canvas.height + text.y
+          break
+
+        case UITextAnchor.LEFT:
+          x = text.x
+          y = (context.canvas.height) / 2 + text.y
+          break
+
+        case UITextAnchor.RIGHT:
+          x = context.canvas.width + text.x
+          y = (context.canvas.height) / 2 + text.y
+          break
+
+        default:
+        case UITextAnchor.CENTER:
+          x = (context.canvas.width) / 2 + text.x
+          y = (context.canvas.height) / 2 + text.y
+          break
+      }
+      context.fillText(text.text, x, y)
+    } else {
+      context.fillText(text.text, text.x, text.y)
+    }
   }
 
   #renderUITexts(gl, context, texts) {
@@ -804,7 +860,6 @@ export class CustomRenderer {
 
     }
 
-    console.log(x, y)
     context.save()
     context.drawImage(image.image, x, y)
     context.restore()
@@ -817,11 +872,78 @@ export class CustomRenderer {
     }
   }
 
+
+  #renderUIExit(gl, context, camera, cameraTransform, exit) {
+    const transform = Component.findByIdAndConstructor(
+      exit.id,
+      TransformComponent
+    )
+    if (!transform) return
+
+    mat4.identity(this.#model)
+    mat4.invert(camera.viewMatrix, cameraTransform.smallScaleMatrix)
+    mat4.multiply(
+      camera.projectionViewMatrix,
+      camera.projection.matrix,
+      camera.viewMatrix
+    )
+
+    vec3.transformMat4(
+      transform.projectedPosition,
+      transform.smallScalePosition,
+      camera.projectionViewMatrix
+    )
+
+    if (transform.projectedPosition[2] > 1) return
+
+    const ppx = transform.projectedPosition[0] / transform.projectedPosition[2]
+    const ppy = transform.projectedPosition[1] / -transform.projectedPosition[2]
+    if (Math.abs(ppx) < 0.01 && Math.abs(ppy < 0.01)) {
+      exit.isAligned = true
+    }
+
+    const x =
+      ((1 + ppx) /
+        2) *
+      context.canvas.width
+    const y =
+      ((1 + ppy) /
+        2) *
+      context.canvas.height
+
+    context.strokeStyle = '#fff'
+    context.setLineDash([4, 4])
+    context.beginPath()
+    context.arc(x, y, 32, 0, Math.PI * 2)
+    context.moveTo(x - 48, y)
+    context.lineTo(x + 48, y)
+    context.moveTo(x, y - 48)
+    context.lineTo(x, y + 48)
+    context.stroke()
+    context.font = '16px monospace'
+    context.textAlign = 'center'
+    context.textBaseline = 'top'
+    context.fillStyle = 'white'
+    context.fillText('ESCAPE VECTOR', x, y + 40)
+  }
+
+  #renderUIExits(gl, context, camera, cameraTransform, exits) {
+    if (!globalThis.debugRenderer.ui.exits) return
+    for (const exit of exits) {
+      this.#renderUIExit(gl, context, camera, cameraTransform, exit)
+    }
+  }
+
   #renderUI(gl, camera, cameraTransform, context) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height)
     const zones = Component.findByConstructor(UIZoneComponent)
     if (zones) {
       this.#renderUIZones(gl, context, camera, cameraTransform, zones)
+    }
+
+    const exits = Component.findByConstructor(UIExitComponent)
+    if (exits) {
+      this.#renderUIExits(gl, context, camera, cameraTransform, exits)
     }
 
     const images = Component.findByConstructor(UIImageComponent)

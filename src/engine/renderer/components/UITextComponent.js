@@ -1,5 +1,18 @@
 import { Component } from '@taoro/component'
 
+export const UITextAnchor = {
+  NONE: 0,
+  LEFT_TOP: 1,
+  RIGHT_TOP: 2,
+  LEFT_BOTTOM: 3,
+  RIGHT_BOTTOM: 4,
+  TOP: 5,
+  BOTTOM: 6,
+  LEFT: 7,
+  RIGHT: 8,
+  CENTER: 9,
+}
+
 export class UITextComponent extends Component {
   #text = ''
   #x = 0
@@ -18,6 +31,7 @@ export class UITextComponent extends Component {
     this.#textAlign = options?.textAlign ?? 'left'
     this.#textBaseline = options?.textBaseline ?? 'top'
     this.#fillStyle = options?.fillStyle ?? 'white'
+    this.anchor = options?.anchor ?? UITextAnchor.NONE
   }
 
   get text() { return this.#text}

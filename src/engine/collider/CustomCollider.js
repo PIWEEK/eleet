@@ -61,8 +61,8 @@ export class CustomCollider {
               colliders: [aCollider, bCollider],
               transforms: [aTransform, bTransform],
             }
-            aCollider.colliders.set(bCollider, collision)
-            bCollider.colliders.set(aCollider, collision)
+            aCollider.collisions.set(bCollider, collision)
+            bCollider.collisions.set(aCollider, collision)
           }
         }
       }

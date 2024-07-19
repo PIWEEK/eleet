@@ -7,11 +7,12 @@ import { SphereColliderComponent } from '../../engine/collider/components/Sphere
 
 import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
-import { UITextComponent } from '../../engine/renderer/components/UITextComponent'
+import { UITextAnchor, UITextComponent } from '../../engine/renderer/components/UITextComponent'
+import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'
+import { UIExitComponent } from '../../engine/renderer/components/UIExitComponent'
 import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
 
 import { Zone } from './Zone'
-import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'
 
 function getCurrentDate() {
   const date = new Date()
@@ -38,15 +39,20 @@ export function * Player(game) {
     largeScalePosition: vec3.fromValues(-10, -10, -10)
   })
   const camera = new CameraComponent('player')
+
   const collider = new SphereColliderComponent('player', {
-    radius: 0.5
+    radius: 0.5,
+    scale: ColliderScale.BOTH
   })
+
+  const escapeText = new UITextComponent(
+    'player_exit',
+    { anchor: UITextAnchor.CENTER, y: -100, textAlign: 'center', text: '' }
+  )
 
   const dateText = new UITextComponent(
     'player_date',
-    {
-      text: ''
-    }
+    { text: '' }
   )
 
   const velocityText = new UITextComponent('player_vel', {
@@ -96,6 +102,14 @@ export function * Player(game) {
     image: game.resources.get('images/weapons.png'),
   })
 
+  // Vector de salida de una zona.
+  const exitVector = vec3.create()
+  // Vector de entrada en una zona.
+  const enterVector = vec3.create()
+
+  let exitTransform = null
+  let exitUI = null
+
   // TODO: Todo esto habría que meterlo en un componente
   //       que controle el sistema de vuelo.
   const velocity = vec3.create()
@@ -125,23 +139,56 @@ export function * Player(game) {
   let rotateY = 0
   let rotateZ = 0
 
+  let canExit = false
   let autoPilot = false
   let autoPilotStart = 0
 
+  const sharedState = {
+    exit: false
+  }
+
   while (true) {
+
+    // Si estamos en el modo a pequeña escala actualizamos
+    // las coordenadas del vector de escape.
+    if (flightScale === 'small-scale') {
+      vec3.normalize(
+        exitVector,
+        transform.smallScalePosition
+      )
+      const length = vec3.length(transform.smallScalePosition)
+      vec3.scale(
+        exitVector,
+        exitVector,
+        length + 100
+      )
+
+      if (length > 50 && exitUI && exitUI.isAligned) {
+        canExit = true
+      } else {
+        canExit = false
+      }
+
+      if (exitTransform) {
+        vec3.copy(exitTransform.smallScalePosition, exitVector)
+        mat4.translate(exitTransform.smallScaleMatrix, exitTransform.smallScaleMatrix, exitTransform.smallScalePosition)
+      }
+    }
+
+    // Si colisionamos y estamos en el modo a gran escala, es que
+    // estamos entrando en una zona.
     if (collider.collisions.size > 0 && flightScale === 'large-scale') {
-      // console.log('CHOCÓ!')
+      // debugger
       for (const [otherCollider, collision] of collider.collisions) {
-        console.log('collision', otherCollider, collision)
         if (collision.colliders[0] === collider) {
           vec3.subtract(
-            transform.smallScalePosition,
+            enterVector,
             collision.transforms[0].largeScalePosition,
             collision.transforms[1].largeScalePosition
           )
         } else {
           vec3.subtract(
-            transform.smallScalePosition,
+            enterVector,
             collision.transforms[1].largeScalePosition,
             collision.transforms[0].largeScalePosition
           )
@@ -149,7 +196,7 @@ export function * Player(game) {
 
         vec3.scale(
           transform.smallScalePosition,
-          transform.smallScalePosition,
+          enterVector,
           100
         )
 
@@ -164,8 +211,7 @@ export function * Player(game) {
 
         flightScale = 'small-scale'
 
-        currentZone = Zone(game, otherCollider)
-
+        currentZone = Zone(game, otherCollider, sharedState)
         game.scheduler.add(currentZone)
       }
     }
@@ -200,16 +246,60 @@ export function * Player(game) {
       } else {
         rotateY *= 0.9
       }
+
+      if (game.input.stateOf(0, 'fsd') && canExit) {
+        vec3.normalize(exitVector, transform.smallScalePosition)
+        // const length = vec3.length(transform.smallScalePosition)
+        vec3.scale(exitVector, exitVector, 0.1)
+        vec3.add(
+          transform.largeScalePosition,
+          transform.largeScalePosition,
+          exitVector
+        )
+        mat4.translate(
+          transform.largeScaleMatrix,
+          transform.largeScaleMatrix,
+          transform.largeScalePosition
+        )
+
+        flightScale = 'large-scale'
+
+        exitUI.unregister()
+        exitTransform.unregister()
+        exitUI = null
+        exitTransform = null
+
+        canExit = false
+
+        sharedState.exit = true
+        autoPilot = true
+      }
     } else {
-      const autoPilotTime = Date.now() - autoPilotStart
-      linearVelocity[2] = linear(
-        (autoPilotTime / 1000),
-        -0.5,
-        -0.001
-      )
-      if (autoPilotTime >= 1000) {
-        linearVelocity[2] = -0.001
-        autoPilot = false
+
+      if (sharedState.exit === true) {
+        const autoPilotTime = Date.now() - autoPilotStart
+        linearVelocity[2] = linear(autoPilotTime / 1000, -0.001, -0.05)
+
+        if (autoPilotTime >= 1000) {
+          linearVelocity[2] = -0.05
+
+          sharedState.exit = false
+          autoPilot = false
+        }
+      } else {
+        const autoPilotTime = Date.now() - autoPilotStart
+        linearVelocity[2] = linear(autoPilotTime / 1000, -0.5, -0.001)
+
+        if (autoPilotTime >= 1000) {
+          linearVelocity[2] = -0.001
+
+          exitTransform = new TransformComponent('player_exit', {
+            smallScalePosition: vec3.fromValues(0, 0, 0),
+          })
+          exitUI = new UIExitComponent('player_exit')
+
+          autoPilot = false
+        }
       }
     }
 
@@ -262,6 +352,7 @@ export function * Player(game) {
       mat4.copy(transform.matrix, transform.smallScaleMatrix)
     }
 
+    escapeText.text = canExit ? 'FSD' : ''
     dateText.text = getCurrentDate()
     velocityText.text = `${(-linearVelocity[2] * 10000).toFixed(2)}m/s`;
     yield

@@ -4,7 +4,7 @@ import { vec3 } from 'gl-matrix'
 import { Asteroid } from './Asteroid'
 import { Station } from './Station'
 
-export function * Zone(game, zone) {
+export function * Zone(game, zone, sharedState) {
   // ÑAPAZA
   // TODO: Esto debería poder exponerse
   // en el motor del juego (la clase
@@ -21,26 +21,36 @@ export function * Zone(game, zone) {
     console.log(numAsteroids)
     for (let index = 0; index < numAsteroids; index++) {
       game.scheduler.add(
-        Asteroid(game, {
-          type: random.intBetween(0, 2),
-          smallScalePosition: vec3.fromValues(
-            random.between(-50, 50),
-            random.between(-50, 50),
-            random.between(-50, 50)
-          ),
-        })
+        Asteroid(
+          game,
+          {
+            type: random.intBetween(0, 2),
+            smallScalePosition: vec3.fromValues(
+              random.between(-50, 50),
+              random.between(-50, 50),
+              random.between(-50, 50)
+            ),
+          },
+          sharedState
+        )
       )
     }
     game.scheduler.add(
-      Station(game, {
-        smallScalePosition: vec3.fromValues(0, 0, 0),
-      })
+      Station(
+        game,
+        {
+          smallScalePosition: vec3.fromValues(0, 0, 0),
+        },
+        sharedState
+      )
     )
   }
 
-  while (true) {
+  while (!sharedState.exit) {
     yield
   }
+
+  // debugger
 
   globalThis.debugRenderer.orbits = true
   globalThis.debugRenderer.ui.zones = true

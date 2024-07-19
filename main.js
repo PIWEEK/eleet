@@ -152,7 +152,7 @@ async function start() {
         [
           'fsd',
           [
-            [InputDevice.KEYBOARD, ['KeyQ']],
+            [InputDevice.KEYBOARD, ['KeyF']],
             [InputDevice.GAMEPAD, [0, InputKind.BUTTON, 1]],
           ],
         ],
