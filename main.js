@@ -41,7 +41,7 @@ class ConfigParams {
 async function start() {
 
   const params = new ConfigParams(location)
-  const star = StellarForge.create(params.seed)
+  const star = new StellarForge(params.seed)
 
   const canvas = document.querySelector('canvas')
   const game = new Game(canvas)

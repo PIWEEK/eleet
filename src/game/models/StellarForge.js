@@ -28,6 +28,20 @@ import { Zone } from './Zone'
  * Cuando le pasamos una semilla, genera un sistema estelar.
  */
 export class StellarForge {
+  /**
+   * Órbitas
+   *
+   * @type {Array<Orbit>}
+   */
+  #orbits = []
+
+  /**
+   * Cuerpos
+   *
+   * @type {Array<Body>}
+   */
+  #bodies = []
+
   // Unidad Astronómica
   static AU = 149.597
   static ORBIT_DISTANCE = 50.00
@@ -40,7 +54,7 @@ export class StellarForge {
    * @param {string} type
    * @returns {Body|Ring|Zone}
    */
-  static #createOrbitObject(random, orbit, type) {
+  #createOrbitObject(random, orbit, type) {
     switch (type) {
       case 'body':
         return new Body({
@@ -65,7 +79,7 @@ export class StellarForge {
     }
   }
 
-  static #createBodyOrbits(random, body, maxDepth = 0, depth = 0) {
+  #createBodyOrbits(random, body, maxDepth = 0, depth = 0) {
     const numOrbits = random.intBetween(5, 9)
     for (let orbitIndex = 0; orbitIndex < numOrbits; orbitIndex++) {
       const orbit = new Orbit({
@@ -76,6 +90,8 @@ export class StellarForge {
         ),
         eccentricity: 0,
       })
+
+      this.#orbits.push(orbit)
 
       const numOrbitObjects = random.between(3, 4)
       for (
@@ -89,29 +105,29 @@ export class StellarForge {
         if (content instanceof Body && depth < maxDepth) {
           this.#createBodyOrbits(random, content, maxDepth, depth + 1)
           if (content.radius > 0.5) {
-            orbit.orbitObjects.push(
-              new OrbitContent({
-                type: 'ring',
-                orbit: orbit,
-                content: new Ring({
-                  seed: random.seed,
-                  innerRadius: random.between(content.radius + 0.1, content.radius + 0.2),
-                  outerRadius: random.between(content.radius + 0.4, content.radius + 0.5),
-                }),
-                trueAnomaly: trueAnomaly,
-              })
-            )
+            // DUDA: Ring es un body?
+            const orbitContent = new OrbitContent({
+              type: 'ring',
+              orbit: orbit,
+              content: new Ring({
+                seed: random.seed,
+                innerRadius: random.between(content.radius + 0.1, content.radius + 0.2),
+                outerRadius: random.between(content.radius + 0.4, content.radius + 0.5),
+              }),
+              trueAnomaly: trueAnomaly,
+            })
+            // orbit.orbitObjects.push(orbitContent)
+            this.#bodies.push(orbitContent)
           }
         }
-
-        orbit.orbitObjects.push(
-          new OrbitContent({
-            type: type,
-            orbit: orbit,
-            content: content,
-            trueAnomaly: trueAnomaly,
-          })
-        )
+        const orbitContent = new OrbitContent({
+          type: type,
+          orbit: orbit,
+          content: content,
+          trueAnomaly: trueAnomaly,
+        })
+        // orbit.orbitObjects.push(orbitContent)        )
+        this.#bodies.push(orbit)
       }
       body.orbits.push(orbit)
     }
@@ -124,12 +140,26 @@ export class StellarForge {
    * @param {number} seed Semilla utilizada para generar la estrella.
    * @returns {Body} Estrella generada con todas sus órbitas
    */
-  static create(seed) {
+  constructor(seed) {
     const random = new Random(new RandomProvider(seed))
     const star = new Body({
       seed,
       radius: random.between(0.5, 1.5)
     })
-    return this.#createBodyOrbits(random, star)
+    this.#createBodyOrbits(random, star)
+  }
+
+  /**
+   * @type {Array<Orbit>}
+   */
+  get orbits() {
+    return this.#orbits
+  }
+
+  /**
+   * @type {Array<Body>}
+   */
+  get bodies() {
+    return this.#bodies
   }
 }

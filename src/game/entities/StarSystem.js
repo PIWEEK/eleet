@@ -13,6 +13,7 @@ import { StarfieldGeometry } from '../../engine/geometries/StarfieldGeometry'
 import { mat4, vec3 } from 'gl-matrix'
 
 function createComponents(body) {
+  console.log("body", body)
   for (let orbitIndex = 0; orbitIndex < body.orbits.length; orbitIndex++) {
     const orbit = body.orbits[orbitIndex]
     const orbitId = `orbit_${orbitIndex}`

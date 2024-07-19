@@ -294,6 +294,7 @@ export class CustomRenderer {
       imposter.id,
       TransformComponent
     )
+    console.log("transform", transform)
     if (transform) {
       const cameraRotation = quat.create()
       const cameraPosition = vec3.create()
@@ -334,12 +335,7 @@ export class CustomRenderer {
         this.#projectionViewModel
       )
     }
-    const colors = {
-      [Body]: [1, 1, 1, 1],
-      [Ring]: [0, 1, 0, 1],
-      [Zone]: [0, 0, 1, 1],
-    }
-    const [r, g, b, a] = colors[imposter.body.constructor]
+    const [r, g, b, a] = [1, 1, 1, 1]
     gl.uniform4f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_color'),
       r,
