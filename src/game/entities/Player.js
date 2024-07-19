@@ -13,6 +13,7 @@ import { UIExitComponent } from '../../engine/renderer/components/UIExitComponen
 import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
 
 import { Zone } from './Zone'
+import { Zone as ZoneModel } from '../models/Zone'
 
 function getCurrentDate() {
   const date = new Date()
@@ -47,6 +48,11 @@ export function * Player(game) {
 
   const escapeText = new UITextComponent(
     'player_exit',
+    { anchor: UITextAnchor.CENTER, y: -100, textAlign: 'center', text: '' }
+  )
+
+  const descriptionText = new UITextComponent(
+    'description',
     { anchor: UITextAnchor.CENTER, y: -100, textAlign: 'center', text: '' }
   )
 
@@ -134,6 +140,7 @@ export function * Player(game) {
 
   let flightScale = 'large-scale'
   let currentZone = null
+  let currentZoneModel = null
 
   let rotateX = 0
   let rotateY = 0
@@ -212,8 +219,16 @@ export function * Player(game) {
         flightScale = 'small-scale'
 
         currentZone = Zone(game, otherCollider, sharedState)
+        currentZoneModel = new ZoneModel(333)
+        
         game.scheduler.add(currentZone)
       }
+    }
+
+    if (currentZone !== null) {
+      descriptionText.text = currentZoneModel.description
+    } else {
+      descriptionText.text = ""
     }
 
     if (!autoPilot) {
