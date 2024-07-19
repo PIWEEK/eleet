@@ -46,3 +46,10 @@ Para exportar todos los modelos de la carpeta `public/models`:
 ```sh
 pnpm run models:export
 ```
+
+## IA
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+ollama run llama3
+```

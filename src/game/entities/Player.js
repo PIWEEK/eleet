@@ -46,13 +46,13 @@ export function * Player(game) {
     scale: ColliderScale.BOTH
   })
 
-  const escapeText = new UITextComponent(
-    'player_exit',
-    { anchor: UITextAnchor.CENTER, y: -100, textAlign: 'center', text: '' }
-  )
-
   const descriptionText = new UITextComponent(
     'description',
+    { y: 240, text: 'Lorem ipsum\ndolor sit amet' }
+  )
+
+  const escapeText = new UITextComponent(
+    'player_exit',
     { anchor: UITextAnchor.CENTER, y: -100, textAlign: 'center', text: '' }
   )
 
@@ -146,6 +146,7 @@ export function * Player(game) {
   let rotateY = 0
   let rotateZ = 0
 
+  let canEnter = false
   let canExit = false
   let autoPilot = false
   let autoPilotStart = 0
@@ -220,13 +221,15 @@ export function * Player(game) {
 
         currentZone = Zone(game, otherCollider, sharedState)
         currentZoneModel = new ZoneModel(333)
-        
+
         game.scheduler.add(currentZone)
       }
     }
 
-    if (currentZone !== null) {
-      descriptionText.text = currentZoneModel.description
+    if (currentZoneModel !== null) {
+      if (descriptionText.text.length < currentZoneModel.description.length) {
+        descriptionText.text = currentZoneModel.description.slice(0, descriptionText.text.length + 1)
+      }
     } else {
       descriptionText.text = ""
     }
@@ -286,6 +289,8 @@ export function * Player(game) {
 
         canExit = false
 
+        descriptionText.text = ''
+        currentZoneModel = null
         sharedState.exit = true
         autoPilot = true
       }

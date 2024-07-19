@@ -31,6 +31,7 @@ export class UITextComponent extends Component {
     this.#textAlign = options?.textAlign ?? 'left'
     this.#textBaseline = options?.textBaseline ?? 'top'
     this.#fillStyle = options?.fillStyle ?? 'white'
+    this.lineHeight = 20
     this.anchor = options?.anchor ?? UITextAnchor.NONE
   }
 

@@ -746,9 +746,9 @@ export class CustomRenderer {
     context.textAlign = text.textAlign
     context.textBaseline = text.textBaseline
     context.fillStyle = text.fillStyle
+    let x = text.x,
+      y = text.y
     if (text.anchor) {
-      let x = 0,
-        y = 0
       switch (text.anchor) {
         case UITextAnchor.LEFT_TOP:
           x = text.x
@@ -796,9 +796,11 @@ export class CustomRenderer {
           y = (context.canvas.height) / 2 + text.y
           break
       }
-      context.fillText(text.text, x, y)
-    } else {
-      context.fillText(text.text, text.x, text.y)
+    }
+    const lines = `${text.text}`.split('\n') ?? []
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      const line = lines[lineIndex]
+      context.fillText(line, x, y + text.lineHeight * lineIndex)
     }
   }
 
@@ -871,7 +873,6 @@ export class CustomRenderer {
       this.#renderUIImage(gl, context, image)
     }
   }
-
 
   #renderUIExit(gl, context, camera, cameraTransform, exit) {
     const transform = Component.findByIdAndConstructor(

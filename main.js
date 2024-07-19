@@ -57,6 +57,7 @@ async function start() {
   await game.resources.load('models/asteroide-mediano.blend.json')
   await game.resources.load('models/asteroide-grande.blend.json')
   await game.resources.load('models/station.blend.json')
+  await game.resources.load('models/estacion-pirata.blend.json')
   await game.resources.load('models/basic-ship.blend.json')
   await game.resources.load('models/nave-basica.blend.json')
   await game.resources.load('models/nave-comercio.blend.json')
