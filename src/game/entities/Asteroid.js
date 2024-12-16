@@ -1,6 +1,6 @@
-import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
+import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
-import MeshGeometry from '../../engine/geometries/MeshGeometry'
+import MeshGeometry from '../../engine/renderer/geometries/MeshGeometry'
 import { mat4 } from 'gl-matrix'
 
 export const AsteroidSize = {

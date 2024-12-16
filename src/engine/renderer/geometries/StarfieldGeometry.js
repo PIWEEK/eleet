@@ -1,6 +1,12 @@
 import { Random } from '@taoro/math-random'
-import { RandomProvider } from '@taoro/math-random-lcg'
+import { RandomProvider } from '@taoro/math-random-wasm'
 import WebGL from '@taoro/webgl'
+
+/**
+ * @typedef {Object} StarfieldGeometryOptions
+ * @property {number} [seed=0]
+ * @property {number} [size=1000]
+ */
 
 /**
  * FIXME: Esto también podría renderizarlo utilizando
@@ -11,6 +17,11 @@ export class StarfieldGeometry {
   #buffer = null
   #vao = null
 
+  /**
+   * Constructor
+   *
+   * @param {StarfieldGeometryOptions} options
+   */
   constructor(options) {
     const seed = options?.seed || 0
     const size = options?.size || 1000

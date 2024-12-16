@@ -175,6 +175,23 @@ uniform mat4 u_view;
 in vec2 v_texCoord;
 out vec4 o_fragColor;
 
+/*
+// Sphere Impostors.
+// https://www.reddit.com/r/GraphicsProgramming/comments/ku9vuu/rendering_a_sphere_on_a_quad_making_the_sphere/
+// https://paroj.github.io/gltut/Illumination/Tutorial%2013.html
+void imposter(vec2 mapping, out vec3 cameraPos, out vec3 cameraNormal)
+{
+  float lengthSquared = dot(mapping, mapping);
+  if (lengthSquared > 1.0)
+      discard;
+
+  cameraNormal = vec3(mapping, sqrt(1.0 - lengthSquared));
+  cameraPos = (cameraNormal * sphereRadius) + cameraSpherePos;
+}
+*/
+
+//
+//
 vec4 renderPlanet(vec2 pos, vec4 color) {
   // Esta normal es con respecto a la pantalla.
   vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
@@ -193,129 +210,125 @@ vec4 renderPlanet(vec2 pos, vec4 color) {
 }
 
 vec4 renderSun(vec2 pos, vec4 color) {
-    const float halodist = 0.9;
+  const float haloDist = 0.9;
 
-    vec4 fragColor  = vec4(0);
+  vec4 fragColor  = vec4(0);
 
-    vec3 light = vec3(cos(u_time), .0, sin(u_time));
-    float apos = atan(pos.y, pos.x);
-    vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
-    vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
+  vec3 light = vec3(cos(u_time), .0, sin(u_time));
+  float apos = atan(pos.y, pos.x);
+  vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+  vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
 
-    vec2 tpos = vec2(
-      atan(relative_norm.z, relative_norm.x) / TAU,
-      asin(relative_norm.y) / TAU
+  vec2 tpos = vec2(
+    atan(relative_norm.z, relative_norm.x) / TAU,
+    asin(relative_norm.y) / TAU
+  );
+
+  vec2 tdpos0 = vec2(
+      mod(u_time * .1, 1.),
+      mod(-u_time* 0.01, 1.)
+  ) + tpos;
+  vec4 tex0 = random_texture(
+    tdpos0
+  );
+
+  vec2 tdpos1 = vec2(
+      mod(u_time * .1, 1.),
+      mod(u_time * 0.01, 1.)
+  ) + tpos;
+  vec4 tex1 = random_texture(
+    tdpos1
+  );
+
+  float rx = atan(relative_norm.y, relative_norm.x) / PI;
+  float ry = mod(u_time * 0.01, 1.);
+  vec2 rpos = vec2(rx, ry);
+  vec4 rtex0 = random_texture(
+    rpos
+  );
+  vec4 rtex1 = random_texture(
+    rpos
+  );
+  float incidence = dot(light, relative_norm);
+  float dist = length(pos);
+  float ndist = haloDist - dist;
+  if (dist > haloDist) {
+    fragColor = vec4(0);
+    fragColor += mix(
+        colorMain,
+        colorBlack,
+        pow(dist - haloDist, .0125)
     );
 
-    vec2 tdpos0 = vec2(
-        mod(u_time * .1, 1.),
-        mod(-u_time* 0.01, 1.)
-    ) + tpos;
-    vec4 tex0 = random_texture(
-      tdpos0
-    );
+    float ldist = haloDist + rtex1.x * .075;
+    if (dist < ldist) {
+      vec4 corona = mix(
+        colorMain * 0.1,
+        colorBlack,
+        from(dist, haloDist, ldist)
+      );
+      fragColor += corona;
+    }
 
-    vec2 tdpos1 = vec2(
-        mod(u_time * .1, 1.),
-        mod(u_time * 0.01, 1.)
-   	) + tpos;
-    vec4 tex1 = random_texture(
-      tdpos1
-    );
+    float hdist = haloDist + rtex0.x * 0.05 + rtex1.x * 0.1;
+    if (dist < hdist) {
+      vec4 corona = mix(
+        colorMain * 0.5,
+        colorBlack,
+        from(dist, haloDist, hdist)
+      );
+      fragColor += corona;
+    }
 
-    float rx = atan(relative_norm.y, relative_norm.x) / PI;
-    float ry = mod(u_time * 0.01, 1.);
-    vec2 rpos = vec2(rx, ry);
-    vec4 rtex0 = random_texture(
-      rpos
-    );
-    vec4 rtex1 = random_texture(
-      rpos
-    );
-    float incidence = dot(light, relative_norm);
-    float dist = length(pos);
-    float ndist = halodist - dist;
-    if (dist > halodist) {
-      fragColor = vec4(0);
-      fragColor += mix(
-          colorMain,
-          colorBlack,
-          pow(dist - halodist, .0125)
+    float rdist = haloDist + rtex0.x * 0.1;
+    if (dist < rdist) {
+      vec4 corona = mix(
+        colorMain + vec4(0.5, 0.5, 0.5, 1.),
+        colorBlack,
+        from(dist, haloDist, rdist)
+      );
+      fragColor += corona;
+    }
+  } else {
+    /*
+    fragColor = vec4(
+          mix(
+              colorWhite * 0.1,
+              colorMain,
+            (tex0.x + tex1.x) * 0.5
+          )
+      ) * haloDist;
+
+      fragColor += vec4(
+          mix(
+              colorMain,
+              colorBlack,
+              pow(haloDist, 0.5)
+          )
       );
 
-      float ldist = halodist + rtex1.x * .075;
-      if (dist < ldist) {
-        vec4 corona = mix(
-          colorMain * 0.1,
-          colorBlack,
-          from(dist, halodist, ldist)
-        );
-        fragColor += corona;
-      }
-
-      float hdist = halodist + rtex0.x * 0.05 + rtex1.x * 0.1;
-      if (dist < hdist) {
-        vec4 corona = mix(
-          colorMain * 0.5,
-          colorBlack,
-          from(dist, halodist, hdist)
-        );
-        fragColor += corona;
-      }
-
-      float rdist = halodist + rtex0.x * 0.1;
-      if (dist < rdist) {
-        vec4 corona = mix(
-          colorMain + vec4(0.5, 0.5, 0.5, 1.),
-          colorBlack,
-          from(dist, halodist, rdist)
-        );
-        fragColor += corona;
-      }
-    } else {
-      /*
-    	fragColor = vec4(
-            mix(
-                colorWhite * 0.1,
-                colorMain,
-            	(tex0.x + tex1.x) * 0.5
-            )
-        ) * halodist;
-
-        fragColor += vec4(
-            mix(
-                colorMain,
-                colorBlack,
-                pow(halodist, 0.5)
-            )
-        );
-
-        fragColor += vec4(
-            mix(
-                colorMain * 0.7,
-                colorBlack,
-                pow(halodist, 0.09)
-            )
-        );
-      */
-      fragColor = colorWhite;
-    }
-    float brightness = (fragColor.x + fragColor.y + fragColor.z) / 3.0;
-    return vec4(color) * dither8x8(gl_FragCoord.xy, brightness);
+      fragColor += vec4(
+          mix(
+              colorMain * 0.7,
+              colorBlack,
+              pow(haloDist, 0.09)
+          )
+      );
+    */
+    fragColor = colorWhite;
+  }
+  float brightness = (fragColor.x + fragColor.y + fragColor.z) / 3.0;
+  return vec4(color) * dither8x8(gl_FragCoord.xy, brightness);
 }
 
 void main() {
-  if (length(v_texCoord) > 1.0)
-  {
+  if (length(v_texCoord) > 1.0) {
     discard;
   }
 
-  if (u_type == TYPE_SUN)
-  {
+  if (u_type == TYPE_SUN) {
     o_fragColor = renderSun(v_texCoord, u_color);
-  }
-  else
-  {
+  } else {
     o_fragColor = renderPlanet(v_texCoord, u_color);
   }
 }

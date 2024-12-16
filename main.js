@@ -1,13 +1,11 @@
 import './style.css'
-import { Game } from '@taoro/game'
 import { InputDevice, InputKind } from '@taoro/input'
+import { RandomProvider } from '@taoro/math-random-wasm'
 // import { Audio3D } from '@taoro/audio-3d'
-import { CustomRenderer } from './src/engine/renderer/CustomRenderer'
+import { Eleet } from './src/Eleet'
 import { Player } from './src/game/entities/Player'
 import { StarSystem } from './src/game/entities/StarSystem'
 import { StellarForge } from './src/game/models/StellarForge'
-import CustomCollider from './src/engine/collider/CustomCollider'
-import { Asteroid } from './src/game/entities/Asteroid'
 
 class ConfigParams {
   #url = null
@@ -41,10 +39,12 @@ class ConfigParams {
 async function start() {
 
   const params = new ConfigParams(location)
+
+  await RandomProvider.load('wasm/random.wasm')
   const star = StellarForge.create(params.seed)
 
   const canvas = document.querySelector('canvas')
-  const game = new Game(canvas)
+  const game = new Eleet(canvas)
 
   await game.resources.load('images/cross.png')
   await game.resources.load('images/engine.png')
@@ -64,10 +64,7 @@ async function start() {
   await game.resources.load('models/nave-mercenaria.blend.json')
 
   // const audio3D = new Audio3D(game.audio)
-  const customRenderer = new CustomRenderer(canvas)
-  const customCollider = new CustomCollider()
-  game.pipeline.unshift(() => customCollider.update())
-  game.pipeline.push(() => customRenderer.update())
+  console.log('pipeline', game.pipeline.keys())
   game.input.setBindings(0, (state) => {
     if (state.index === 0) {
       return [
@@ -161,13 +158,9 @@ async function start() {
     }
   })
 
-  // game.scheduler.add(Asteroid(game))
   game.scheduler.add(StarSystem(game, star))
   game.scheduler.add(Player(game))
   game.start()
-
-  console.log('Hello, World!')
-
 }
 
 /**

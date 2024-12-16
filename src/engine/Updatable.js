@@ -2,6 +2,9 @@ export class Updatable {
   #needsUpdate = false
 
   constructor(needsUpdate = true) {
+    if (typeof needsUpdate !== 'boolean') {
+      throw new TypeError('Invalid initial value')
+    }
     this.#needsUpdate = needsUpdate
   }
 

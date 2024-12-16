@@ -2,10 +2,10 @@
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
 import { linear } from '@taoro/math-interpolation'
-import { ColliderScale } from '../../engine/collider/CustomCollider'
+import { ColliderScale } from '../../engine/collider/Collider'
 import { SphereColliderComponent } from '../../engine/collider/components/SphereColliderComponent'
 
-import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
+import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
 import { UITextAnchor, UITextComponent } from '../../engine/renderer/components/UITextComponent'
 import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'

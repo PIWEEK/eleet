@@ -1,5 +1,5 @@
 import { Component } from '@taoro/component'
-import { ColliderScale } from '../CustomCollider'
+import { ColliderScale } from '../Collider'
 
 export class ColliderComponent extends Component {
   #scale = ColliderScale.LARGE

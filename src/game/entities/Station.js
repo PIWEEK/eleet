@@ -1,8 +1,8 @@
-import { TransformComponent } from '../../engine/renderer/components/TransformComponent'
+import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
-import MeshGeometry from '../../engine/geometries/MeshGeometry'
+import MeshGeometry from '../../engine/renderer/geometries/MeshGeometry'
 import { Random } from '@taoro/math-random'
-import { RandomProvider } from '@taoro/math-random-lcg'
+import { RandomProvider } from '@taoro/math-random-wasm'
 
 export function* Station(game, options, sharedState) {
   const random = new Random(new RandomProvider())
@@ -17,7 +17,7 @@ export function* Station(game, options, sharedState) {
     .floor(Math.random() * Number.MAX_SAFE_INTEGER)
     .toString(36)
 
-    const transform = new TransformComponent(`station_${id}`, {
+  const transform = new TransformComponent(`station_${id}`, {
     smallScalePosition: options.smallScalePosition,
   })
 

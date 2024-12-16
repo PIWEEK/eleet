@@ -1,13 +1,13 @@
 import { Component } from '@taoro/component'
 import WebGL from '@taoro/webgl'
 import { mat4, vec4, vec3, quat } from 'gl-matrix'
-import shaders from '../shaders'
+import shaders from './shaders'
 import PerspectiveProjection from '../PerspectiveProjection'
 import { Body } from '../../game/models/Body'
 import { Ring } from '../../game/models/Ring'
 import { Zone } from '../../game/models/Zone'
 import { CameraComponent } from './components/CameraComponent'
-import { TransformComponent } from './components/TransformComponent'
+import { TransformComponent } from '../components/TransformComponent'
 import { StarfieldComponent } from './components/StarfieldComponent'
 import { OrbitComponent } from './components/OrbitComponent'
 import { RingComponent } from './components/RingComponent'
@@ -18,12 +18,11 @@ import { UIZoneComponent } from './components/UIZoneComponent'
 import { UITextAnchor, UITextComponent } from './components/UITextComponent'
 import { UIImageAnchor, UIImageComponent } from './components/UIImageComponent'
 import { UIExitComponent } from './components/UIExitComponent'
-import { SphereColliderComponent } from '../collider/components/SphereColliderComponent'
 
 /**
  * Renderizador custom para el juego.
  */
-export class CustomRenderer {
+export class Renderer {
   /**
    * Canvas
    *
@@ -200,6 +199,13 @@ export class CustomRenderer {
     gl.bindVertexArray(null)
   }
 
+  /**
+   *
+   * @param {WebGL2RenderingContext} gl
+   * @param {*} camera
+   * @param {*} cameraTransform
+   * @param {*} orbit
+   */
   #renderOrbit(gl, camera, cameraTransform, orbit) {
     const transform = Component.findByIdAndConstructor(
       orbit.id,
@@ -1004,3 +1010,5 @@ export class CustomRenderer {
     }
   }
 }
+
+export default Renderer

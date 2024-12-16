@@ -1,9 +1,11 @@
 import { Component } from '@taoro/component'
-import { TransformComponent } from '../renderer/components/TransformComponent'
+import { TransformComponent } from '../components/TransformComponent'
 import { vec3 } from 'gl-matrix'
 import { SphereColliderComponent } from './components/SphereColliderComponent'
 
-
+/**
+ *
+ */
 export const ColliderScale = {
   LARGE: 1,
   SMALL: 2,
@@ -15,7 +17,7 @@ export const ColliderScale = {
  * las colisiones entre los diferentes elementos
  * del juego.
  */
-export class CustomCollider {
+export class Collider {
   /**
    * En la broadphase comprobamos las colisiones
    * a gran escala entre los elementos que pueden colisionar.
@@ -84,4 +86,4 @@ export class CustomCollider {
   }
 }
 
-export default CustomCollider
+export default Collider

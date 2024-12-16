@@ -31,8 +31,8 @@ export class PerspectiveProjection extends Updatable {
   constructor(
     fieldOfView = Math.PI * 0.5,
     aspectRatio = 1,
-    near = 0.001,
-    far = 1000
+    near = 0.1,
+    far = 1000.0
   ) {
     super()
     this.#fieldOfView = fieldOfView

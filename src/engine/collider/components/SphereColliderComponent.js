@@ -2,6 +2,9 @@ import { Component } from '@taoro/component'
 import { ColliderComponent } from './ColliderComponent'
 
 export class SphereColliderComponent extends ColliderComponent {
+  /**
+   * @type {number}
+   */
   #radius = 1.0
 
   constructor(id, options) {
@@ -10,5 +13,7 @@ export class SphereColliderComponent extends ColliderComponent {
     this.#radius = options?.radius ?? 1.0
   }
 
-  get radius() { return this.#radius }
+  get radius() {
+    return this.#radius
+  }
 }

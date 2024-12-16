@@ -1,5 +1,5 @@
 import { Random } from '@taoro/math-random'
-import { RandomProvider } from '@taoro/math-random-lcg'
+import { RandomProvider } from '@taoro/math-random-wasm'
 import { Body, BodyType } from './Body'
 import { Ring } from './Ring'
 import { Orbit } from './Orbit'
