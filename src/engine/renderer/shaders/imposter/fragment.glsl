@@ -171,7 +171,7 @@ uniform vec4 u_color;
 uniform int u_type;
 uniform float u_time;
 uniform vec3 u_position;
-uniform mat4 u_view;
+uniform mat4 u_imposter;
 in vec2 v_texCoord;
 out vec4 o_fragColor;
 
@@ -190,12 +190,10 @@ void imposter(vec2 mapping, out vec3 cameraPos, out vec3 cameraNormal)
 }
 */
 
-//
-//
-vec4 renderPlanet(vec2 pos, vec4 color) {
-  // Esta normal es con respecto a la pantalla.
+vec4 renderPlanetOld(vec2 pos, vec4 color) {
   vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
-  vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
+  // Esta es la normal con respecto al universo.
+  vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
 
   float d = length(pos);
   float a = dot(-u_position, world_norm);
@@ -209,6 +207,32 @@ vec4 renderPlanet(vec2 pos, vec4 color) {
   }
 }
 
+/**
+ * Renders a planet
+ */
+vec4 renderPlanet(vec2 pos, vec4 color) {
+  // Esta es la normal en el espacio de la pantalla.
+  vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+  // return vec4(relative_norm, 1.0);
+  // Esta es la normal con respecto al universo.
+  vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
+  // return vec4(world_norm, 1.0);
+
+  float d = length(pos);
+  float a = dot(-u_position, world_norm);
+
+  if (d < 0.99) {
+    return vec4(color) * dither8x8(gl_FragCoord.xy, a);
+  } else if (d > 1.0) {
+    return vec4(0);
+  } else {
+    return vec4(color);
+  }
+}
+
+/**
+ * Renders the sun as a white sphere with a small halo.
+ */
 vec4 renderSun(vec2 pos, vec4 color) {
   const float haloDist = 0.9;
 
@@ -217,7 +241,7 @@ vec4 renderSun(vec2 pos, vec4 color) {
   vec3 light = vec3(cos(u_time), .0, sin(u_time));
   float apos = atan(pos.y, pos.x);
   vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
-  vec3 world_norm = (u_view * vec4(relative_norm, 1.0)).xyz;
+  vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
 
   vec2 tpos = vec2(
     atan(relative_norm.z, relative_norm.x) / TAU,

@@ -58,8 +58,15 @@ export class Renderer {
    * utilizadas para los cálculos del render.
    */
   #view = mat4.create()
+  #viewForward = vec3.create()
+  #viewRight = vec3.create()
+  #viewUp = vec3.create()
+  #viewPosition = vec3.create()
   #model = mat4.create()
   #projectionViewModel = mat4.create()
+  #imposter = mat4.create()
+  #imposterRotation = mat4.create()
+  #imposterPosition = vec3.create()
 
   /**
    * Constructor
@@ -86,7 +93,7 @@ export class Renderer {
         exits: true,
         zones: true,
         texts: true,
-        images: true
+        images: true,
       },
     }
 
@@ -304,35 +311,37 @@ export class Renderer {
       TransformComponent
     )
     if (transform) {
-      const cameraRotation = quat.create()
-      const cameraPosition = vec3.create()
-      const position = vec3.create()
+      mat4.getTranslation(this.#imposterPosition, transform.largeScaleMatrix)
+      mat4.targetTo(this.#imposter, this.#viewPosition, this.#imposterPosition, this.#viewUp)
+      mat4.set(
+        this.#model,
+        this.#imposter[0], this.#imposter[1], this.#imposter[2], this.#imposter[3],
+        this.#imposter[4], this.#imposter[5], this.#imposter[6], this.#imposter[7],
+        this.#imposter[8], this.#imposter[9], this.#imposter[10], this.#imposter[11],
+        this.#imposterPosition[0], this.#imposterPosition[1], this.#imposterPosition[2], 1.0,
+      )
 
-      // FIXME: Sacar este cálculo a #computeViewMatrices
-      // porque realmente la rotación y la posición de la cámara
-      // se puede extraer de la matriz de transformación de la
-      // cámara.
-      mat4.getRotation(cameraRotation, cameraTransform.largeScaleMatrix)
-      mat4.getTranslation(position, transform.largeScaleMatrix)
-      mat4.getTranslation(cameraPosition, cameraTransform.largeScaleMatrix)
-      mat4.fromRotationTranslation(this.#model, cameraRotation, position)
+      mat4.set(
+        this.#imposterRotation,
+        this.#imposter[0], this.#imposter[1], this.#imposter[2], this.#imposter[3],
+        this.#imposter[4], this.#imposter[5], this.#imposter[6], this.#imposter[7],
+        this.#imposter[8], this.#imposter[9], this.#imposter[10], this.#imposter[11],
+        0, 0, 0, 1
+      )
 
-      // mat4.targetTo(this.#model, position, cameraPosition, vec3.fromValues(0, 1, 0))
       mat4.multiply(
         this.#projectionViewModel,
         camera.projectionViewMatrix,
         this.#model
       )
       gl.uniformMatrix4fv(
-        gl.getUniformLocation(this.#programs.get('imposter'), 'u_view'),
+        gl.getUniformLocation(this.#programs.get('imposter'), 'u_imposter'),
         false,
-        // TODO: Ver de qué forma se puede corregir la "rotación"
-        //       rara que se forma entre el imposter y la cámara.
-        cameraTransform.rotationMatrix
+        this.#imposterRotation
       )
       gl.uniform3fv(
         gl.getUniformLocation(this.#programs.get('imposter'), 'u_position'),
-        position
+        this.#imposterPosition
       )
       gl.uniformMatrix4fv(
         gl.getUniformLocation(
@@ -676,6 +685,32 @@ export class Renderer {
     )
   }
 
+  #computeAdditionalViewData(camera, cameraTransform) {
+    mat4.getTranslation(
+      this.#viewPosition,
+      cameraTransform.largeScaleMatrix
+    )
+
+    vec3.set(
+      this.#viewRight,
+      cameraTransform.rotationMatrix[0],
+      cameraTransform.rotationMatrix[1],
+      cameraTransform.rotationMatrix[2]
+    )
+    vec3.set(
+      this.#viewUp,
+      cameraTransform.rotationMatrix[4],
+      cameraTransform.rotationMatrix[5],
+      cameraTransform.rotationMatrix[6]
+    )
+    vec3.set(
+      this.#viewForward,
+      cameraTransform.rotationMatrix[8],
+      cameraTransform.rotationMatrix[9],
+      cameraTransform.rotationMatrix[10]
+    )
+  }
+
   /**
    * Renderiza una vista.
    *
@@ -685,6 +720,8 @@ export class Renderer {
   #renderView(gl, camera, cameraTransform) {
     const aspectRatio = this.#canvas.width / this.#canvas.height
     camera.projection.aspectRatio = aspectRatio
+
+    this.#computeAdditionalViewData(camera, cameraTransform)
 
     this.#computeLargeScaleViewMatrices(camera, cameraTransform)
     this.#renderLargeScale(gl, camera, cameraTransform)
@@ -777,29 +814,29 @@ export class Renderer {
           break
 
         case UITextAnchor.TOP:
-          x = (contxt.canvas.width) / 2 + text.dx
+          x = contxt.canvas.width / 2 + text.dx
           y = text.y
           break
 
         case UITextAnchor.BOTTOM:
-          x = (context.canvas.width) / 2 + ext.dx
+          x = context.canvas.width / 2 + ext.dx
           y = context.canvas.height + text.y
           break
 
         case UITextAnchor.LEFT:
           x = text.x
-          y = (context.canvas.height) / 2 + text.y
+          y = context.canvas.height / 2 + text.y
           break
 
         case UITextAnchor.RIGHT:
           x = context.canvas.width + text.x
-          y = (context.canvas.height) / 2 + text.y
+          y = context.canvas.height / 2 + text.y
           break
 
         default:
         case UITextAnchor.CENTER:
-          x = (context.canvas.width) / 2 + text.x
-          y = (context.canvas.height) / 2 + text.y
+          x = context.canvas.width / 2 + text.x
+          y = context.canvas.height / 2 + text.y
           break
       }
     }
@@ -818,7 +855,8 @@ export class Renderer {
   }
 
   #renderUIImage(gl, context, image) {
-    let x = 0, y = 0
+    let x = 0,
+      y = 0
     switch (image.anchor) {
       case UIImageAnchor.LEFT_TOP:
         x = image.dx
@@ -865,7 +903,6 @@ export class Renderer {
         x = (context.canvas.width - image.image.width) / 2 + image.dx
         y = (context.canvas.height - image.image.height) / 2 + image.dy
         break
-
     }
 
     context.save()
@@ -909,14 +946,8 @@ export class Renderer {
       exit.isAligned = true
     }
 
-    const x =
-      ((1 + ppx) /
-        2) *
-      context.canvas.width
-    const y =
-      ((1 + ppy) /
-        2) *
-      context.canvas.height
+    const x = ((1 + ppx) / 2) * context.canvas.width
+    const y = ((1 + ppy) / 2) * context.canvas.height
 
     context.strokeStyle = '#fff'
     context.setLineDash([4, 4])

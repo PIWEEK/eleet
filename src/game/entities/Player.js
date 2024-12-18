@@ -2,6 +2,7 @@
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
 import { linear } from '@taoro/math-interpolation'
+import { Component } from '@taoro/component'
 import { ColliderScale } from '../../engine/collider/Collider'
 import { SphereColliderComponent } from '../../engine/collider/components/SphereColliderComponent'
 
@@ -139,6 +140,7 @@ export function * Player(game) {
   )
 
   let flightScale = 'large-scale'
+
   let currentZone = null
   let currentZoneModel = null
 
@@ -306,7 +308,9 @@ export function * Player(game) {
           sharedState.exit = false
           autoPilot = false
         }
+
       } else {
+
         const autoPilotTime = Date.now() - autoPilotStart
         linearVelocity[2] = linear(autoPilotTime / 1000, -0.5, -0.001)
 
@@ -320,7 +324,9 @@ export function * Player(game) {
 
           autoPilot = false
         }
+
       }
+
     }
 
     if (rotateZ !== 0) {
@@ -378,8 +384,7 @@ export function * Player(game) {
     yield
   }
 
-  transform.unregister()
-  camera.unregister()
+  Component.unregisterAllById('player')
 }
 
 export default Player
