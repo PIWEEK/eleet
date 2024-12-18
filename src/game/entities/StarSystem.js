@@ -55,7 +55,7 @@ function createComponents(body) {
       if (orbitObject.type === 'body') {
         new ImposterComponent(
           orbitObjectId,
-          orbitObject.content
+          orbitObject.content,
         )
         new SphereColliderComponent(
           orbitObjectId,

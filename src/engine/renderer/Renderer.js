@@ -6,6 +6,7 @@ import PerspectiveProjection from '../PerspectiveProjection'
 import { Body } from '../../game/models/Body'
 import { Ring } from '../../game/models/Ring'
 import { Zone } from '../../game/models/Zone'
+import { BodyType } from '../../game/models/Body'
 import { CameraComponent } from './components/CameraComponent'
 import { TransformComponent } from '../components/TransformComponent'
 import { StarfieldComponent } from './components/StarfieldComponent'
@@ -51,6 +52,18 @@ export class Renderer {
    */
   #vaos = new Map()
 
+  /**
+   * Textures.
+   *
+   * @type {Map.<string, WebGLTexture>}
+   */
+  #textures = new Map()
+
+  /**
+   * @type {Resources}
+   */
+  #resources
+
   #ui = null
 
   /**
@@ -72,9 +85,11 @@ export class Renderer {
    * Constructor
    *
    * @param {HTMLCanvasElement|OffscreenCanvas} canvas
+   * @param {Resources} resources
    */
-  constructor(canvas) {
+  constructor(canvas, resources) {
     this.#canvas = canvas
+    this.#resources = resources
 
     // TODO: Esto debería poder exponerse
     // en el motor del juego (la clase
@@ -97,7 +112,7 @@ export class Renderer {
       },
     }
 
-    const gl = canvas.getContext('webgl2', {
+    const gl = this.#gl = canvas.getContext('webgl2', {
       depth: true,
       stencil: false,
       antialias: true,
@@ -107,61 +122,18 @@ export class Renderer {
     const uiContext = uiCanvas.getContext('2d', {
       alpha: true,
     })
-    const uiTexture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, uiTexture)
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
+    const uiTexture = this.#createTextureFromSize(
       uiCanvas.width,
-      uiCanvas.height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
+      uiCanvas.height
     )
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    /*
-    gl.texSubImage2D(
-      gl.TEXTURE_2D,
-      0,
-      0,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      uiCanvas
-    )
-    */
-    gl.bindTexture(gl.TEXTURE_2D, null)
+
+    this.#textures.set('ui', uiTexture)
 
     this.#ui = {
       canvas: uiCanvas,
       context: uiContext,
       texture: uiTexture,
     }
-
-    /*
-    console.log('Depth bits', gl.getParameter(gl.DEPTH_BITS))
-    console.log(
-      'Depth func',
-      Object.entries(WebGL2RenderingContext).find(([key, value]) =>
-        gl.getParameter(gl.DEPTH_FUNC) === value ? key : null
-      )
-    )
-    console.log(
-      'Depth mask',
-      gl.getParameter(gl.DEPTH_WRITEMASK)
-    )
-    console.log(
-      'Depth clear value',
-      gl.getParameter(gl.DEPTH_CLEAR_VALUE)
-    )
-    console.log('Depth range', gl.getParameter(gl.DEPTH_RANGE))
-    */
-
-    this.#gl = gl
 
     for (const [name, program] of Object.entries(shaders)) {
       this.#programs.set(
@@ -173,6 +145,50 @@ export class Renderer {
         )
       )
     }
+  }
+
+  #createTextureFromImage(image) {
+    const gl = this.#gl
+    const texture = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      image.width,
+      image.height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      image
+    )
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.bindTexture(gl.TEXTURE_2D, null)
+    return texture
+  }
+
+  #createTextureFromSize(width, height) {
+    const gl = this.#gl
+    const texture = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      width,
+      height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    )
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.bindTexture(gl.TEXTURE_2D, null)
+    return texture
   }
 
   /**
@@ -352,19 +368,14 @@ export class Renderer {
         this.#projectionViewModel
       )
     }
-    const colors = {
-      [Body]: [1, 1, 1, 1],
-      [Ring]: [0, 1, 0, 1],
-      [Zone]: [0, 0, 1, 1],
-    }
-    const [r, g, b, a] = colors[imposter.body.constructor]
     gl.uniform4f(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_color'),
-      r,
-      g,
-      b,
-      a
+      1,
+      1,
+      1,
+      1
     )
+
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_type'),
       imposter.type
@@ -377,7 +388,21 @@ export class Renderer {
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_size'),
       imposter.radius
     )
+    if (imposter.type === BodyType.TEXTURED_PLANET) {
+      if (!this.#textures.has(imposter.subtype)) {
+        this.#textures.set(imposter.subtype, this.#createTextureFromImage(this.#resources.get(imposter.subtype)))
+      }
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, this.#textures.get(imposter.subtype))
+      gl.uniform1i(
+        gl.getUniformLocation(this.#programs.get('ui'), 'u_sampler'),
+        0
+      )
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    if (imposter.type === BodyType.TEXTURED_PLANET) {
+      gl.bindTexture(gl.TEXTURE_2D, null)
+    }
   }
 
   #renderStarfields(gl, camera, cameraTransform, starfields) {

@@ -18,7 +18,7 @@ export class Eleet extends Game {
    */
   constructor(canvas, options) {
     super(canvas, options)
-    this.#renderer = new Renderer(canvas)
+    this.#renderer = new Renderer(canvas, this.resources)
     this.#collider = new Collider()
     this.#simulation = new Simulation()
     this.#spatialAudio = new Audio3D(this.audio, {

@@ -15,6 +15,7 @@ import { CameraComponent } from '../../engine/renderer/components/CameraComponen
 
 import { Zone } from './Zone'
 import { Zone as ZoneModel } from '../models/Zone'
+import StellarScale from './StellarScale'
 
 function getCurrentDate() {
   const date = new Date()
@@ -139,7 +140,7 @@ export function * Player(game) {
     0,
   )
 
-  let flightScale = 'large-scale'
+  let flightScale = StellarScale.STELLAR
 
   let currentZone = null
   let currentZoneModel = null
@@ -161,7 +162,7 @@ export function * Player(game) {
 
     // Si estamos en el modo a pequeña escala actualizamos
     // las coordenadas del vector de escape.
-    if (flightScale === 'small-scale') {
+    if (flightScale === StellarScale.ZONE) {
       vec3.normalize(
         exitVector,
         transform.smallScalePosition
@@ -187,7 +188,7 @@ export function * Player(game) {
 
     // Si colisionamos y estamos en el modo a gran escala, es que
     // estamos entrando en una zona.
-    if (collider.collisions.size > 0 && flightScale === 'large-scale') {
+    if (collider.collisions.size > 0 && flightScale === StellarScale.STELLAR) {
       // debugger
       for (const [otherCollider, collision] of collider.collisions) {
         if (collision.colliders[0] === collider) {
@@ -219,7 +220,7 @@ export function * Player(game) {
 
         collider.scale = ColliderScale.SMALL
 
-        flightScale = 'small-scale'
+        flightScale = StellarScale.ZONE
 
         currentZone = Zone(game, otherCollider, sharedState)
         currentZoneModel = new ZoneModel(333)
@@ -282,7 +283,7 @@ export function * Player(game) {
           transform.largeScalePosition
         )
 
-        flightScale = 'large-scale'
+        flightScale = StellarScale.STELLAR
 
         exitUI.unregister()
         exitTransform.unregister()
@@ -347,7 +348,7 @@ export function * Player(game) {
     vec3.copy(velocity, transform.forward)
     vec3.scale(velocity, velocity, linearVelocity[2])
 
-    if (flightScale === 'large-scale') {
+    if (flightScale === StellarScale.STELLAR) {
       vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
 
       mat4.identity(transform.positionMatrix)

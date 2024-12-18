@@ -39,6 +39,7 @@ export function * Asteroid(game, options, sharedState) {
   )
 
   while (!sharedState.exit) {
+    mat4.rotateX(transform.smallScaleMatrix, transform.smallScaleMatrix, 0.0001)
     yield
   }
 

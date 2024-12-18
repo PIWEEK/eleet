@@ -1,6 +1,7 @@
 export const BodyType = {
   STAR: 0,
-  PLANET: 1
+  PLANET: 1,
+  TEXTURED_PLANET: 2
 }
 
 export class Body {
@@ -17,6 +18,8 @@ export class Body {
    * @type {}
    */
   #type = BodyType.STAR
+
+  #subtype = 'textures/bodies/2k_ceres_fictional.jpg'
 
   /**
    * Tamaño del cuerpo.
@@ -56,6 +59,10 @@ export class Body {
 
   get type() {
     return this.#type
+  }
+
+  get subtype() {
+    return this.#subtype
   }
 
   /**

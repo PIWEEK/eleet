@@ -44,7 +44,7 @@ export class StellarForge {
     switch (type) {
       case 'body':
         return new Body({
-          type: BodyType.PLANET,
+          type: BodyType.TEXTURED_PLANET,
           seed: random.seed,
           // Devuelve un planeta entre el tamaño de mercurio
           // y el tamaño de jupiter.

@@ -17,6 +17,8 @@ export class ImposterComponent extends Component {
 
   get type() { return this.#body.type }
 
+  get subtype() { return this.#body.subtype }
+
   get radius() {
     return this.#body?.radius ?? 5
   }

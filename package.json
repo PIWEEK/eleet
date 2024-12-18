@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "models:export": "for f in public/models/*.blend; do blender --background --python scripts/export.py -- $f; done"
+    "export:model": "blender --background --python scripts/export.py -- $1",
+    "export:models": "for f in public/models/*.blend; do blender --background --python scripts/export.py -- $f; done"
   },
   "devDependencies": {
     "vite": "^5.3.3"

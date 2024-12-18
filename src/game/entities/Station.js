@@ -1,17 +1,14 @@
 import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
-import MeshGeometry from '../../engine/renderer/geometries/MeshGeometry'
+import { MeshGeometry } from '../../engine/renderer/geometries/MeshGeometry'
 import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-wasm'
+import { mat4 } from 'gl-matrix'
 
 export function* Station(game, options, sharedState) {
   const random = new Random(new RandomProvider())
-  const stationType = random.intBetween(0, 1)
-  const stations = [
-    'station.blend.json',
-    'estacion-pirata.blend.json'
-  ]
-  const stationModel = stations[stationType]
+  const stations = ['station-big.blend.json']
+  const stationModel = random.pickOne(stations)
 
   const id = Math
     .floor(Math.random() * Number.MAX_SAFE_INTEGER)
@@ -33,6 +30,7 @@ export function* Station(game, options, sharedState) {
   const mesh = new MeshComponent(`station_${id}`, geometry)
 
   while (!sharedState.exit) {
+    mat4.rotateZ(transform.smallScaleMatrix, transform.smallScaleMatrix, 0.00001)
     yield
   }
 

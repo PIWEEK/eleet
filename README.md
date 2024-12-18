@@ -38,18 +38,23 @@ pnpm run dev
 Si quieres exportar un único modelo, se puede hacer con el comando:
 
 ```sh
-blender --background --python scripts/export.py -- models/basic-ship.blend
+pnpm run export:model <ruta del modelo>
 ```
 
 Para exportar todos los modelos de la carpeta `public/models`:
 
 ```sh
-pnpm run models:export
+pnpm run export:models
 ```
 
 ## IA
+
+Se puede instalar ollama utilizando el siguiente comando:
 
 ```sh
 curl -fsSL https://ollama.com/install.sh | sh
 ollama run llama3
 ```
+
+
+

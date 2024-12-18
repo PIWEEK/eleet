@@ -5,6 +5,7 @@
 
 #define TYPE_SUN 0
 #define TYPE_PLANET 1
+#define TYPE_TEXTURED_PLANET 2
 
 precision highp float;
 
@@ -172,32 +173,22 @@ uniform int u_type;
 uniform float u_time;
 uniform vec3 u_position;
 uniform mat4 u_imposter;
+uniform sampler2D u_sampler;
 in vec2 v_texCoord;
 out vec4 o_fragColor;
 
-/*
-// Sphere Impostors.
-// https://www.reddit.com/r/GraphicsProgramming/comments/ku9vuu/rendering_a_sphere_on_a_quad_making_the_sphere/
-// https://paroj.github.io/gltut/Illumination/Tutorial%2013.html
-void imposter(vec2 mapping, out vec3 cameraPos, out vec3 cameraNormal)
-{
-  float lengthSquared = dot(mapping, mapping);
-  if (lengthSquared > 1.0)
-      discard;
-
-  cameraNormal = vec3(mapping, sqrt(1.0 - lengthSquared));
-  cameraPos = (cameraNormal * sphereRadius) + cameraSpherePos;
-}
-*/
-
-vec4 renderPlanetOld(vec2 pos, vec4 color) {
+/**
+ * Renders a planet
+ */
+vec4 renderPlanet(vec2 pos, vec4 color) {
+  // Esta es la normal en el espacio de la pantalla.
   vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
+  // return vec4(relative_norm, 1.0);
   // Esta es la normal con respecto al universo.
   vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
-
+  // return vec4(world_norm, 1.0);
   float d = length(pos);
   float a = dot(-u_position, world_norm);
-
   if (d < 0.99) {
     return vec4(color) * dither8x8(gl_FragCoord.xy, a);
   } else if (d > 1.0) {
@@ -210,23 +201,27 @@ vec4 renderPlanetOld(vec2 pos, vec4 color) {
 /**
  * Renders a planet
  */
-vec4 renderPlanet(vec2 pos, vec4 color) {
+vec4 renderTexturedPlanet(vec2 pos, sampler2D text) {
   // Esta es la normal en el espacio de la pantalla.
   vec3 relative_norm = normalize(vec3(pos, sqrt(1. - dot(pos, pos))));
   // return vec4(relative_norm, 1.0);
   // Esta es la normal con respecto al universo.
   vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
   // return vec4(world_norm, 1.0);
-
+  vec2 tex = vec2(
+    atan(world_norm.z, world_norm.x) / TAU,
+    acos(abs(world_norm.y)) / TAU
+  );
   float d = length(pos);
   float a = dot(-u_position, world_norm);
-
   if (d < 0.99) {
-    return vec4(color) * dither8x8(gl_FragCoord.xy, a);
+    vec4 color = texture(text, tex).xxxw;
+    float c = dither8x8(gl_FragCoord.xy, color.x);
+    return vec4(c, c, c, color.w) * dither8x8(gl_FragCoord.xy, a);
   } else if (d > 1.0) {
-    return vec4(0);
+    return vec4(0.0);
   } else {
-    return vec4(color);
+    return vec4(1.0);
   }
 }
 
@@ -352,6 +347,8 @@ void main() {
 
   if (u_type == TYPE_SUN) {
     o_fragColor = renderSun(v_texCoord, u_color);
+  } else if (u_type == TYPE_TEXTURED_PLANET) {
+    o_fragColor = renderTexturedPlanet(v_texCoord, u_sampler);
   } else {
     o_fragColor = renderPlanet(v_texCoord, u_color);
   }
