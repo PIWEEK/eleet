@@ -4,7 +4,7 @@ import { vec3 } from 'gl-matrix'
 import { Asteroid } from './Asteroid'
 import { Station } from './Station'
 
-export function * Zone(game, zone, sharedState) {
+export function * Zone(game, zone) {
   // ÑAPAZA
   // TODO: Esto debería poder exponerse
   // en el motor del juego (la clase
@@ -30,8 +30,7 @@ export function * Zone(game, zone, sharedState) {
               random.between(-50, 50),
               random.between(-50, 50)
             ),
-          },
-          sharedState
+          }
         )
       )
     }
@@ -40,13 +39,12 @@ export function * Zone(game, zone, sharedState) {
         game,
         {
           smallScalePosition: vec3.fromValues(0, 0, 0),
-        },
-        sharedState
+        }
       )
     )
   }
 
-  while (!sharedState.exit) {
+  while (true) {
     yield
   }
 

@@ -396,7 +396,7 @@ export class Renderer {
       gl.activeTexture(gl.TEXTURE0)
       gl.bindTexture(gl.TEXTURE_2D, this.#textures.get(imposter.texture))
       gl.uniform1i(
-        gl.getUniformLocation(this.#programs.get('ui'), 'u_sampler'),
+        gl.getUniformLocation(this.#programs.get('imposter'), 'u_sampler'),
         0
       )
     }

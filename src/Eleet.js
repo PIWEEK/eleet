@@ -4,7 +4,7 @@ import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-wasm'
 import { Renderer } from './engine/renderer/Renderer'
 import { TransformComponent } from './engine/components/TransformComponent'
-import { Simulation } from './engine/simulation/Simulation'
+import { Simulation } from './engine/simulation/components/Simulation'
 export class Eleet extends Game {
   #renderer = null
   #collider = null

@@ -1,5 +1,5 @@
-import { Component } from '@taoro/component'
 import { vec3 } from 'gl-matrix'
+import { Component } from '@taoro/component'
 import { BodyType } from '../../BodyType'
 
 export class BodyComponent extends Component {
@@ -39,6 +39,7 @@ export class BodyComponent extends Component {
    */
   constructor(id, type, options = {}) {
     super(id, options)
+    Component.register(this, BodyComponent, id)
     this.#type = type
 
     if (options?.linearAcceleration) {

@@ -1,19 +1,30 @@
 import { linear } from '@taoro/math-interpolation'
 import { Component } from '@taoro/component'
-import { SimulationScale } from './SimulationScale'
-import { ShipComponent } from './components/ShipComponent'
-import { TransformComponent } from '../components/TransformComponent'
-import { SphereColliderComponent } from './components/SphereColliderComponent'
+import { SimulationScale } from '../SimulationScale'
+import { ShipComponent } from './ShipComponent'
+import { TransformComponent } from '../../components/TransformComponent'
+import { SphereColliderComponent } from './SphereColliderComponent'
 import { vec3, mat4 } from 'gl-matrix'
-import { OrbitBodyComponent } from './components/OrbitBodyComponent'
-import { OrbitComponent } from './components/OrbitComponent'
+import { OrbitBodyComponent } from './OrbitBodyComponent'
+import { OrbitComponent } from './OrbitComponent'
+import { BodyComponent } from './BodyComponent'
+import BodyType from '../../BodyType'
 
 export class Simulation {
   /**
-   * Zone en la que se encuentra el jugador, null si no
+   * Cuerpo en el que se encuentra el jugador, null si no
    * se encuentra en ninguna zona en concreto.
+   *
+   * @type {BodyComponent}
    */
-  #currentZoneComponent = null
+  #currentBodyComponent = null
+
+  /**
+   *
+   *
+   * @type {TransformComponent}
+   */
+  #currentBodyTransformComponent = null
 
   /**
    * En la broadphase comprobamos las colisiones
@@ -89,7 +100,7 @@ export class Simulation {
   }
 
   #updateZones() {
-    if (this.#currentZoneComponent) {
+    if (this.#currentBodyComponent) {
 
     }
   }
@@ -148,14 +159,35 @@ export class Simulation {
       // Si estamos en el modo a pequeña escala actualizamos
       // las coordenadas del vector de escape.
       if (ship.scale === SimulationScale.ZONE) {
-        vec3.normalize(ship.exitVector, transform.smallScalePosition)
-        const length = vec3.length(transform.smallScalePosition)
-        vec3.scale(ship.exitVector, ship.exitVector, length + 100)
+        switch (this.#currentBodyComponent.type) {
+          case BodyType.ZONE:
+          {
+            vec3.normalize(ship.exitVector, transform.smallScalePosition)
+            const length = vec3.length(transform.smallScalePosition)
+            vec3.scale(ship.exitVector, ship.exitVector, length + 100)
 
-        if (length > 50) {
-          ship.canExit = true
-        } else {
-          ship.canExit = false
+            if (length > 50) {
+              ship.canExit = true
+            } else {
+              ship.canExit = false
+            }
+          }
+          break;
+
+          case BodyType.STAR:
+          case BodyType.PLANET:
+          {
+            vec3.subtract(ship.exitVector, transform.largeScalePosition, this.#currentBodyTransformComponent.largeScalePosition)
+            const length = vec3.length(transform.smallScalePosition)
+            vec3.normalize(ship.exitVector, ship.exitVector)
+            vec3.scale(ship.exitVector, ship.exitVector, length + 100)
+            if (length > 50) {
+              ship.canExit = true
+            } else {
+              ship.canExit = false
+            }
+          }
+          break;
         }
       }
 
@@ -189,6 +221,14 @@ export class Simulation {
       if (collider.collisions.size > 0
        && ship.scale === SimulationScale.STELLAR) {
         for (const [otherCollider, collision] of collider.collisions) {
+          const bodyComponent = Component.findByIdAndConstructor(otherCollider.id, BodyComponent)
+          this.#currentBodyComponent = bodyComponent
+
+          const bodyTransformComponent = Component.findByIdAndConstructor(otherCollider.id, TransformComponent)
+          this.#currentBodyTransformComponent = bodyTransformComponent
+
+          // TODO: Asegurarnos de que corregimos la posición del jugador
+          //       cuando entra en una zona.
           if (collision.colliders[0] === collider) {
             vec3.subtract(
               ship.enterVector,
@@ -203,6 +243,9 @@ export class Simulation {
             )
           }
 
+          // Colocamos la nave en la posición relativa al vector
+          // de entrada.
+          vec3.normalize(ship.enterVector, ship.enterVector)
           vec3.scale(transform.smallScalePosition, ship.enterVector, 500)
 
           ship.pitch = 0
@@ -249,6 +292,9 @@ export class Simulation {
       vec3.copy(ship.velocity, transform.forward)
       vec3.scale(ship.velocity, ship.velocity, ship.linearVelocity[2])
 
+      // Si esto en la escala "estelar" actualizo la matriz de posición
+      // largeScaleMatrix, si entro en la escala "pequeña" o escala de "zona"
+      // entonces actualizo la smallScaleMatrix.
       if (ship.scale === SimulationScale.STELLAR) {
         vec3.add(
           transform.largeScalePosition,
@@ -276,6 +322,9 @@ export class Simulation {
         )
 
         mat4.copy(transform.matrix, transform.largeScaleMatrix)
+
+      // Estos son los cálculos para las matrices de la escala
+      // de "zona".
       } else {
         vec3.add(
           transform.smallScalePosition,

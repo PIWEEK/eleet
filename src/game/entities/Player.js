@@ -99,6 +99,7 @@ export function * Player(game) {
   })
 
   let exitUI = null
+  let exitTransform = null
   let currentZone = null
   let currentZoneModel = null
 
@@ -108,7 +109,6 @@ export function * Player(game) {
 
   while (true) {
 
-    /*
     if (exitTransform) {
       vec3.copy(exitTransform.smallScalePosition, ship.exitVector)
       mat4.translate(
@@ -117,7 +117,6 @@ export function * Player(game) {
         exitTransform.smallScalePosition
       )
     }
-    */
 
     if (!ship.autoPilot) {
       if (game.input.stateOf(0, 'throttle-up')) {
@@ -178,7 +177,7 @@ export function * Player(game) {
         ship.autoPilot = true
       }
     } else {
-      ship.exitTransform = new TransformComponent('player_exit', {
+      exitTransform = new TransformComponent('player_exit', {
         smallScalePosition: vec3.fromValues(0, 0, 0),
       })
       exitUI = new UIExitComponent('player_exit')
