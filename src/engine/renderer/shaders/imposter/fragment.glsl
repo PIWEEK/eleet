@@ -3,9 +3,11 @@
 #define PI 3.14159265
 #define TAU (PI * 2.0)
 
-#define TYPE_SUN 0
-#define TYPE_PLANET 1
-#define TYPE_TEXTURED_PLANET 2
+#define TYPE_SHIP 0
+#define TYPE_ZONE 1
+#define TYPE_PLANET 2
+#define TYPE_STAR 3
+#define TYPE_RING 4
 
 precision highp float;
 
@@ -345,11 +347,15 @@ void main() {
     discard;
   }
 
-  if (u_type == TYPE_SUN) {
-    o_fragColor = renderSun(v_texCoord, u_color);
-  } else if (u_type == TYPE_TEXTURED_PLANET) {
-    o_fragColor = renderTexturedPlanet(v_texCoord, u_sampler);
-  } else {
-    o_fragColor = renderPlanet(v_texCoord, u_color);
+  switch(u_type) {
+    case TYPE_STAR:
+      o_fragColor = renderSun(v_texCoord, u_color);
+      break;
+    case TYPE_PLANET:
+      o_fragColor = renderTexturedPlanet(v_texCoord, u_sampler);
+      break;
+    default:
+      o_fragColor = renderPlanet(v_texCoord, u_color);
+      break;
   }
 }

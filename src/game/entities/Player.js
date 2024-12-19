@@ -3,8 +3,7 @@
 import { mat4, vec3 } from 'gl-matrix'
 import { linear } from '@taoro/math-interpolation'
 import { Component } from '@taoro/component'
-import { ColliderScale } from '../../engine/collider/Collider'
-import { SphereColliderComponent } from '../../engine/collider/components/SphereColliderComponent'
+import { SphereColliderComponent } from '../../engine/simulation/components/SphereColliderComponent'
 
 import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
@@ -15,7 +14,8 @@ import { CameraComponent } from '../../engine/renderer/components/CameraComponen
 
 import { Zone } from './Zone'
 import { Zone as ZoneModel } from '../models/Zone'
-import StellarScale from './StellarScale'
+import { ShipComponent } from '../../engine/simulation/components/ShipComponent'
+import { SimulationScale } from '../../engine/simulation/SimulationScale'
 
 function getCurrentDate() {
   const date = new Date()
@@ -41,12 +41,15 @@ export function * Player(game) {
   const transform = new TransformComponent('player', {
     largeScalePosition: vec3.fromValues(-10, -10, -10)
   })
-  const camera = new CameraComponent('player')
 
   const collider = new SphereColliderComponent('player', {
     radius: 0.5,
-    scale: ColliderScale.BOTH
+    scale: SimulationScale.STELLAR,
   })
+
+  const ship = new ShipComponent('player')
+
+  const camera = new CameraComponent('player')
 
   const descriptionText = new UITextComponent(
     'description',
@@ -110,49 +113,8 @@ export function * Player(game) {
     image: game.resources.get('images/weapons.png'),
   })
 
-  // Vector de salida de una zona.
-  const exitVector = vec3.create()
-  // Vector de entrada en una zona.
-  const enterVector = vec3.create()
-
-  let exitTransform = null
-  let exitUI = null
-
-  // TODO: Todo esto habría que meterlo en un componente
-  //       que controle el sistema de vuelo.
-  const velocity = vec3.create()
-
-  const angularAcceleration = vec3.fromValues(
-    0.0001,
-    0.0001,
-    0.0001,
-  )
-
-  const linearAcceleration = vec3.fromValues(
-    0.0001,
-    0.0001,
-    0.0001
-  )
-
-  const linearVelocity = vec3.fromValues(
-    0,
-    0,
-    0,
-  )
-
-  let flightScale = StellarScale.STELLAR
-
   let currentZone = null
   let currentZoneModel = null
-
-  let rotateX = 0
-  let rotateY = 0
-  let rotateZ = 0
-
-  let canEnter = false
-  let canExit = false
-  let autoPilot = false
-  let autoPilotStart = 0
 
   const sharedState = {
     exit: false
@@ -160,122 +122,56 @@ export function * Player(game) {
 
   while (true) {
 
-    // Si estamos en el modo a pequeña escala actualizamos
-    // las coordenadas del vector de escape.
-    if (flightScale === StellarScale.ZONE) {
-      vec3.normalize(
-        exitVector,
-        transform.smallScalePosition
+    /*
+    if (exitTransform) {
+      vec3.copy(exitTransform.smallScalePosition, ship.exitVector)
+      mat4.translate(
+        exitTransform.smallScaleMatrix,
+        exitTransform.smallScaleMatrix,
+        exitTransform.smallScalePosition
       )
-      const length = vec3.length(transform.smallScalePosition)
-      vec3.scale(
-        exitVector,
-        exitVector,
-        length + 100
-      )
-
-      if (length > 50 && exitUI && exitUI.isAligned) {
-        canExit = true
-      } else {
-        canExit = false
-      }
-
-      if (exitTransform) {
-        vec3.copy(exitTransform.smallScalePosition, exitVector)
-        mat4.translate(exitTransform.smallScaleMatrix, exitTransform.smallScaleMatrix, exitTransform.smallScalePosition)
-      }
     }
+    */
 
-    // Si colisionamos y estamos en el modo a gran escala, es que
-    // estamos entrando en una zona.
-    if (collider.collisions.size > 0 && flightScale === StellarScale.STELLAR) {
-      // debugger
-      for (const [otherCollider, collision] of collider.collisions) {
-        if (collision.colliders[0] === collider) {
-          vec3.subtract(
-            enterVector,
-            collision.transforms[0].largeScalePosition,
-            collision.transforms[1].largeScalePosition
-          )
-        } else {
-          vec3.subtract(
-            enterVector,
-            collision.transforms[1].largeScalePosition,
-            collision.transforms[0].largeScalePosition
-          )
-        }
-
-        vec3.scale(
-          transform.smallScalePosition,
-          enterVector,
-          100
-        )
-
-        rotateX = 0
-        rotateY = 0
-        rotateZ = 0
-
-        autoPilot = true
-        autoPilotStart = Date.now()
-
-        collider.scale = ColliderScale.SMALL
-
-        flightScale = StellarScale.ZONE
-
-        currentZone = Zone(game, otherCollider, sharedState)
-        currentZoneModel = new ZoneModel(333)
-
-        game.scheduler.add(currentZone)
-      }
-    }
-
-    if (currentZoneModel !== null) {
-      if (descriptionText.text.length < currentZoneModel.description.length) {
-        descriptionText.text = currentZoneModel.description.slice(0, descriptionText.text.length + 1)
-      }
-    } else {
-      descriptionText.text = ""
-    }
-
-    if (!autoPilot) {
+    if (!ship.autoPilot) {
       if (game.input.stateOf(0, 'throttle-up')) {
-        linearVelocity[2] += linearAcceleration[2]
+        ship.linearVelocity[2] += ship.linearAcceleration[2]
       } else if (game.input.stateOf(0, 'throttle-down')) {
-        linearVelocity[2] -= linearAcceleration[2]
+        ship.linearVelocity[2] -= ship.linearAcceleration[2]
       }
 
       if (game.input.stateOf(0, 'pitch-up')) {
-        rotateX -= angularAcceleration[0]
+        ship.pitch -= ship.angularAcceleration[0]
       } else if (game.input.stateOf(0, 'pitch-down')) {
-        rotateX += angularAcceleration[0]
+        ship.pitch += ship.angularAcceleration[0]
       } else {
-        rotateX *= 0.9
+        ship.pitch *= 0.9
       }
 
       if (game.input.stateOf(0, 'roll-left')) {
-        rotateZ += angularAcceleration[2]
+        ship.roll += ship.angularAcceleration[2]
       } else if (game.input.stateOf(0, 'roll-right')) {
-        rotateZ -= angularAcceleration[2]
+        ship.roll -= ship.angularAcceleration[2]
       } else {
-        rotateZ *= 0.9
+        ship.roll *= 0.9
       }
 
       if (game.input.stateOf(0, 'yaw-left')) {
-        rotateY += angularAcceleration[1]
+        ship.yaw += ship.angularAcceleration[1]
       } else if (game.input.stateOf(0, 'yaw-right')) {
-        rotateY -= angularAcceleration[1]
+        ship.yaw -= ship.angularAcceleration[1]
       } else {
-        rotateY *= 0.9
+        ship.yaw *= 0.9
       }
 
-      if (game.input.stateOf(0, 'fsd') && canExit) {
-        vec3.normalize(exitVector, transform.smallScalePosition)
+      if (game.input.stateOf(0, 'fsd') && ship.canExit) {
+        vec3.normalize(ship.exitVector, transform.smallScalePosition)
         // const length = vec3.length(transform.smallScalePosition)
-        vec3.scale(exitVector, exitVector, 0.1)
+        vec3.scale(ship.exitVector, ship.exitVector, 0.1)
         vec3.add(
           transform.largeScalePosition,
           transform.largeScalePosition,
-          exitVector
+          ship.exitVector
         )
         mat4.translate(
           transform.largeScaleMatrix,
@@ -283,105 +179,39 @@ export function * Player(game) {
           transform.largeScalePosition
         )
 
-        flightScale = StellarScale.STELLAR
+        ship.scale = SimulationScale.STELLAR
 
         exitUI.unregister()
         exitTransform.unregister()
         exitUI = null
         exitTransform = null
 
-        canExit = false
+        ship.canExit = false
 
         descriptionText.text = ''
-        currentZoneModel = null
-        sharedState.exit = true
-        autoPilot = true
+        ship.autoPilot = true
       }
     } else {
+      ship.exitTransform = new TransformComponent('player_exit', {
+        smallScalePosition: vec3.fromValues(0, 0, 0),
+      })
+      exitUI = new UIExitComponent('player_exit')
+    }
 
-      if (sharedState.exit === true) {
-        const autoPilotTime = Date.now() - autoPilotStart
-        linearVelocity[2] = linear(autoPilotTime / 1000, -0.001, -0.05)
-
-        if (autoPilotTime >= 1000) {
-          linearVelocity[2] = -0.05
-
-          sharedState.exit = false
-          autoPilot = false
-        }
-
-      } else {
-
-        const autoPilotTime = Date.now() - autoPilotStart
-        linearVelocity[2] = linear(autoPilotTime / 1000, -0.5, -0.001)
-
-        if (autoPilotTime >= 1000) {
-          linearVelocity[2] = -0.001
-
-          exitTransform = new TransformComponent('player_exit', {
-            smallScalePosition: vec3.fromValues(0, 0, 0),
-          })
-          exitUI = new UIExitComponent('player_exit')
-
-          autoPilot = false
-        }
-
+    if (currentZoneModel !== null) {
+      if (descriptionText.text.length < currentZoneModel.description.length) {
+        descriptionText.text = currentZoneModel.description.slice(
+          0,
+          descriptionText.text.length + 1
+        )
       }
-
-    }
-
-    if (rotateZ !== 0) {
-      mat4.rotateZ(transform.rotationMatrix, transform.rotationMatrix, rotateZ)
-    }
-
-    if (rotateX !== 0) {
-      mat4.rotateX(transform.rotationMatrix, transform.rotationMatrix, rotateX)
-    }
-
-    if (rotateY !== 0) {
-      mat4.rotateY(transform.rotationMatrix, transform.rotationMatrix, rotateY)
-    }
-
-    vec3.transformMat4(transform.forward, TransformComponent.FORWARD, transform.rotationMatrix)
-    vec3.transformMat4(transform.up, TransformComponent.UP, transform.rotationMatrix)
-
-    vec3.copy(velocity, transform.forward)
-    vec3.scale(velocity, velocity, linearVelocity[2])
-
-    if (flightScale === StellarScale.STELLAR) {
-      vec3.add(transform.largeScalePosition, transform.largeScalePosition, velocity)
-
-      mat4.identity(transform.positionMatrix)
-      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
-
-      mat4.identity(transform.largeScaleMatrix)
-      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.positionMatrix)
-      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.rotationMatrix)
-
-      mat4.copy(transform.matrix, transform.largeScaleMatrix)
     } else {
-      vec3.add(transform.smallScalePosition, transform.smallScalePosition, velocity)
-
-      mat4.identity(transform.positionMatrix)
-      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.largeScalePosition)
-
-      mat4.identity(transform.largeScaleMatrix)
-      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.positionMatrix)
-      mat4.multiply(transform.largeScaleMatrix, transform.largeScaleMatrix, transform.rotationMatrix)
-
-      mat4.identity(transform.positionMatrix)
-      mat4.translate(transform.positionMatrix, transform.positionMatrix, transform.smallScalePosition)
-
-      mat4.identity(transform.smallScaleMatrix)
-      mat4.multiply(transform.smallScaleMatrix, transform.smallScaleMatrix, transform.positionMatrix)
-      mat4.multiply(transform.smallScaleMatrix, transform.smallScaleMatrix, transform.rotationMatrix)
-
-      mat4.copy(transform.matrix, transform.smallScaleMatrix)
+      descriptionText.text = ''
     }
 
-    escapeText.text = canExit ? 'FSD' : ''
+    escapeText.text = ship.canExit ? 'FSD' : ''
     dateText.text = getCurrentDate()
-    velocityText.text = `${(-linearVelocity[2] * 10000).toFixed(2)}m/s`;
+    velocityText.text = `${(-ship.linearVelocity[2] * 10000).toFixed(2)}m/s`;
     yield
   }
 

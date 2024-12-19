@@ -1,12 +1,9 @@
 import { Component } from '@taoro/component'
 import WebGL from '@taoro/webgl'
-import { mat4, vec4, vec3, quat } from 'gl-matrix'
+import { mat4, vec3 } from 'gl-matrix'
 import shaders from './shaders'
 import PerspectiveProjection from '../PerspectiveProjection'
-import { Body } from '../../game/models/Body'
-import { Ring } from '../../game/models/Ring'
-import { Zone } from '../../game/models/Zone'
-import { BodyType } from '../../game/models/Body'
+import { BodyType } from '../../engine/BodyType'
 import { CameraComponent } from './components/CameraComponent'
 import { TransformComponent } from '../components/TransformComponent'
 import { StarfieldComponent } from './components/StarfieldComponent'
@@ -230,27 +227,26 @@ export class Renderer {
    * @param {*} orbit
    */
   #renderOrbit(gl, camera, cameraTransform, orbit) {
+
     const transform = Component.findByIdAndConstructor(
       orbit.id,
       TransformComponent
     )
-    if (transform) {
-      mat4.multiply(
-        this.#projectionViewModel,
-        camera.projectionViewMatrix,
-        transform.largeScaleMatrix
-      )
-
-      gl.uniformMatrix4fv(
-        gl.getUniformLocation(
-          this.#programs.get('orbit'),
-          'u_modelViewProjection'
-        ),
-        false,
-        this.#projectionViewModel
-      )
+    if (!transform) {
+      throw new Error('Orbit component needs transform')
     }
 
+    mat4.multiply(
+      this.#projectionViewModel,
+      camera.projectionViewMatrix,
+      transform.largeScaleMatrix
+    )
+
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(this.#programs.get('orbit'), 'u_modelViewProjection'),
+      false,
+      this.#projectionViewModel
+    )
     const total = 100
     gl.uniform1i(
       gl.getUniformLocation(this.#programs.get('orbit'), 'u_total'),
@@ -388,19 +384,19 @@ export class Renderer {
       gl.getUniformLocation(this.#programs.get('imposter'), 'u_size'),
       imposter.radius
     )
-    if (imposter.type === BodyType.TEXTURED_PLANET) {
-      if (!this.#textures.has(imposter.subtype)) {
-        this.#textures.set(imposter.subtype, this.#createTextureFromImage(this.#resources.get(imposter.subtype)))
+    if (imposter.type === BodyType.PLANET) {
+      if (!this.#textures.has(imposter.texture)) {
+        this.#textures.set(imposter.texture, this.#createTextureFromImage(this.#resources.get(imposter.texture)))
       }
       gl.activeTexture(gl.TEXTURE0)
-      gl.bindTexture(gl.TEXTURE_2D, this.#textures.get(imposter.subtype))
+      gl.bindTexture(gl.TEXTURE_2D, this.#textures.get(imposter.texture))
       gl.uniform1i(
         gl.getUniformLocation(this.#programs.get('ui'), 'u_sampler'),
         0
       )
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-    if (imposter.type === BodyType.TEXTURED_PLANET) {
+    if (imposter.type === BodyType.PLANET) {
       gl.bindTexture(gl.TEXTURE_2D, null)
     }
   }

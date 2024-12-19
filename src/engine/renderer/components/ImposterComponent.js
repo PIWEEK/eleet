@@ -4,22 +4,40 @@ export class ImposterComponent extends Component {
   /**
    * Cuerpo (y subcuerpos) que renderizará este componente.
    *
-   * @type {Body}
+   * @type {BodyType}
    */
-  #body = null
+  #type = null
 
-  constructor(id, body) {
+  /**
+   * Radio del imposter.
+   *
+   * @type {number}
+   */
+  #radius = 5
+
+  /**
+   * Textura que se va a utilizar del imposter.
+   *
+   * @type {string}
+   */
+  #texture = null
+
+  constructor(id, options) {
     super(id)
-    this.#body = body
+    this.#type = options?.type
+    this.#radius = options?.radius
+    this.#texture = options?.texture
   }
 
-  get body() { return this.#body }
-
-  get type() { return this.#body.type }
-
-  get subtype() { return this.#body.subtype }
+  get type() {
+    return this.#type
+  }
 
   get radius() {
-    return this.#body?.radius ?? 5
+    return this.#radius ?? 5
+  }
+
+  get texture() {
+    return this.#texture
   }
 }

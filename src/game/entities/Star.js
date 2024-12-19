@@ -1,3 +1,6 @@
+import { RandomProvider } from '@taoro/math-random-wasm'
+import { Random } from '@taoro/math-random'
+import { mat4, vec3 } from 'gl-matrix'
 import { TransformComponent } from '../../engine/components/TransformComponent'
 import { DustComponent } from '../../engine/renderer/components/DustComponent'
 import { RingComponent } from '../../engine/renderer/components/RingComponent'
@@ -5,12 +8,13 @@ import { ImposterComponent } from '../../engine/renderer/components/ImposterComp
 import { OrbitComponent } from '../../engine/renderer/components/OrbitComponent'
 import { StarfieldComponent } from '../../engine/renderer/components/StarfieldComponent'
 import { UIZoneComponent } from '../../engine/renderer/components/UIZoneComponent'
-
-import { SphereColliderComponent } from '../../engine/collider/components/SphereColliderComponent'
+import { SphereColliderComponent } from '../../engine/simulation/components/SphereColliderComponent'
 import { StarfieldGeometry } from '../../engine/renderer/geometries/StarfieldGeometry'
-// import { Matrix4 } from '@taoro/math-matrix4'
-// import { Vector3 } from '@taoro/math-vector3'
-import { mat4, vec3 } from 'gl-matrix'
+import { ZoneComponent } from '../../engine/simulation/components/ZoneComponent'
+import { StarComponent } from '../../engine/simulation/components/StarComponent'
+import { PlanetComponent } from '../../engine/simulation/components/PlanetComponent'
+import { BodyType } from '../../engine/BodyType'
+import { OrbitBodyComponent } from '../../engine/simulation/components/OrbitBodyComponent'
 
 function createComponents(body) {
   for (let orbitIndex = 0; orbitIndex < body.orbits.length; orbitIndex++) {
@@ -57,6 +61,12 @@ function createComponents(body) {
           orbitObjectId,
           orbitObject.content,
         )
+        new PlanetComponent(
+          orbitObjectId,
+          {
+            radius: random.between(0.1, 0.6)
+          }
+        )
         new SphereColliderComponent(
           orbitObjectId,
           {
@@ -67,6 +77,9 @@ function createComponents(body) {
 
       if (orbitObject.type === 'zone') {
         new UIZoneComponent(
+          orbitObjectId
+        )
+        new ZoneComponent(
           orbitObjectId
         )
         new SphereColliderComponent(
@@ -91,20 +104,51 @@ function createComponents(body) {
   }
 }
 
-export function * StarSystem(game, star) {
+export function * Star(game, params) {
   const starfield = new StarfieldComponent(
     'starfield',
-    new StarfieldGeometry(star.seed)
+    new StarfieldGeometry(params.seed)
   )
+  const random  = new Random(new RandomProvider(params.seed))
 
-  const imposterStar = new ImposterComponent('imposter_star', star)
-  const transformStar = new TransformComponent('imposter_star')
-  const colliderStar = new SphereColliderComponent('imposter_star', {
+  const star = new StarComponent('star', {
+    seed: random.int(),
+    radius: random.between(1, 2)
+  })
+  const imposterStar = new ImposterComponent('star', {
+    type: BodyType.STAR,
+    radius: star.radius
+  })
+  const transformStar = new TransformComponent('star')
+  const colliderStar = new SphereColliderComponent('star', {
     radius: star.radius * 1.5
   })
 
   const dustComponent = new DustComponent('dust')
-  createComponents(star)
+  // createComponents(star)
+  random.seed = star.seed
+  for (let orbitIndex = 0; orbitIndex < 10; orbitIndex++) {
+    const minAxis = 50 * (orbitIndex - 0.5)
+    const maxAxis = 50 * (orbitIndex - 0.5)
+    const orbitId = `orbit_${orbitIndex}`
+    const orbitComponent = new OrbitComponent(orbitId, {
+      semiMajorAxis: random.between(minAxis, maxAxis),
+      semiMinorAxis: random.between(minAxis, maxAxis)
+    })
+    const transformComponent = new TransformComponent(orbitId, {
+      largeScalePosition: vec3.fromValues(0, 0, 0),
+    })
+
+    const numOrbitBodies = random.intBetween(1, 3)
+    for (let orbitBodyIndex = 0; orbitBodyIndex < numOrbitBodies; orbitBodyIndex++) {
+      const orbitBodyId = `orbit_${orbitIndex}_body_${orbitBodyIndex}`
+      const planetComponent = new PlanetComponent(orbitBodyId, {
+        orbit: orbitId,
+        trueAnomaly: random.value()
+      })
+      const transformComponent = new TransformComponent(orbitBodyId)
+    }
+  }
 
   while (true) {
     // TODO: Eventos
@@ -118,4 +162,4 @@ export function * StarSystem(game, star) {
   dustComponent.unregister()
 }
 
-export default StarSystem
+export default Star

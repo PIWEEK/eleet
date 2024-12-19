@@ -2,7 +2,7 @@ import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-wasm'
 import { Body, BodyType } from './Body'
 import { Ring } from './Ring'
-import { Orbit } from './Orbit'
+import { Orbit } from '../../engine/simulation/components/Orbit'
 import { OrbitContent } from './OrbitContent'
 import { Zone } from './Zone'
 
