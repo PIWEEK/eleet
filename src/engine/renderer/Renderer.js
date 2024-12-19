@@ -202,7 +202,7 @@ export class Renderer {
 
     const position = vec3.create()
     const model = mat4.create()
-    mat4.getTranslation(position, cameraTransform.matrix)
+    mat4.getTranslation(position, cameraTransform.largeScaleMatrix)
     mat4.translate(model, model, position)
     mat4.multiply(this.#projectionViewModel, camera.projectionViewMatrix, model)
 
@@ -294,23 +294,24 @@ export class Renderer {
       ring.id,
       TransformComponent
     )
-    if (transform) {
-      mat4.multiply(
-        this.#projectionViewModel,
-        camera.projectionViewMatrix,
-        transform.largeScaleMatrix
-      )
-      gl.uniformMatrix4fv(
-        gl.getUniformLocation(
-          this.#programs.get('ring'),
-          'u_modelViewProjection'
-        ),
-        false,
-        this.#projectionViewModel
-      )
+    if (!transform) {
+      throw new Error('Ring component needs transform')
     }
+    mat4.multiply(
+      this.#projectionViewModel,
+      camera.projectionViewMatrix,
+      transform.largeScaleMatrix
+    )
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(
+        this.#programs.get('ring'),
+        'u_modelViewProjection'
+      ),
+      false,
+      this.#projectionViewModel
+    )
     gl.uniform1i(
-      gl.getUniformLocation(this.#programs.get('ring'), 'u_radius'),
+      gl.getUniformLocation(this.#programs.get('ring'), 'u_total'),
       total
     )
     gl.uniform2f(

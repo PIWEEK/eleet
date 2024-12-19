@@ -1,7 +1,7 @@
 import { BodyType } from '../../BodyType'
 import { BodyComponent } from './BodyComponent'
 
-export class RingComponent extends BodyComponent {
+export class PlanetRingComponent extends BodyComponent {
   /**
    * Semilla del anillo.
    *
@@ -25,6 +25,8 @@ export class RingComponent extends BodyComponent {
 
   constructor(id, options = {}) {
     super(id, BodyType.RING, options)
+    this.#innerRadius = options?.innerRadius
+    this.#outerRadius = options?.outerRadius
   }
 
   get seed() {

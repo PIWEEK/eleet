@@ -1,3 +1,4 @@
+import { linear } from '@taoro/math-interpolation'
 import { Component } from '@taoro/component'
 import { SimulationScale } from './SimulationScale'
 import { ShipComponent } from './components/ShipComponent'
@@ -110,7 +111,8 @@ export class Simulation {
         throw new Error('Orbit body needs a orbit component')
       }
 
-      orbitBody.trueAnomaly += 0.000001
+      // MEECK
+      // orbitBody.trueAnomaly += 0.000001
 
       const x = Math.cos(orbitBody.trueAnomaly) * orbit.semiMajorAxis
       const y = 0

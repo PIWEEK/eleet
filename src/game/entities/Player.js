@@ -1,7 +1,6 @@
 // import { Matrix4 } from '@taoro/math-matrix4'
 // import { Vector3 } from '@taoro/math-vector3'
 import { mat4, vec3 } from 'gl-matrix'
-import { linear } from '@taoro/math-interpolation'
 import { Component } from '@taoro/component'
 import { SphereColliderComponent } from '../../engine/simulation/components/SphereColliderComponent'
 
@@ -11,23 +10,9 @@ import { UITextAnchor, UITextComponent } from '../../engine/renderer/components/
 import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'
 import { UIExitComponent } from '../../engine/renderer/components/UIExitComponent'
 import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
-
-import { Zone } from './Zone'
-import { Zone as ZoneModel } from '../models/Zone'
 import { ShipComponent } from '../../engine/simulation/components/ShipComponent'
 import { SimulationScale } from '../../engine/simulation/SimulationScale'
-
-function getCurrentDate() {
-  const date = new Date()
-  return new Date(
-    date.getFullYear() + 100,
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    date.getSeconds()
-  )
-}
+import { getCurrentDate }  from '../utils/getCurrentDate'
 
 /**
  * Jugador
@@ -113,6 +98,7 @@ export function * Player(game) {
     image: game.resources.get('images/weapons.png'),
   })
 
+  let exitUI = null
   let currentZone = null
   let currentZoneModel = null
 

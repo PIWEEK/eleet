@@ -10,7 +10,7 @@ uniform mat4 u_modelViewProjection;
 uniform vec2 u_radius; // inner y outer
 
 vec4 get_vertex(int index, int total, vec2 radius) {
-  float theta = float(index) / float(total - 1) * TAU;
+  float theta = float(index) / float(total - 2) * TAU;
   float r = index % 2 == 0 ? radius.x : radius.y;
   return vec4(
     cos(theta) * r,

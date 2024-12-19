@@ -13,109 +13,29 @@ import { StarfieldGeometry } from '../../engine/renderer/geometries/StarfieldGeo
 import { ZoneComponent } from '../../engine/simulation/components/ZoneComponent'
 import { StarComponent } from '../../engine/simulation/components/StarComponent'
 import { PlanetComponent } from '../../engine/simulation/components/PlanetComponent'
+import { PlanetRingComponent } from '../../engine/simulation/components/PlanetRingComponent'
 import { OrbitBodyComponent } from '../../engine/simulation/components/OrbitBodyComponent'
 import { OrbitComponent } from '../../engine/simulation/components/OrbitComponent'
 import { BodyType } from '../../engine/BodyType'
 import { PlanetTextures } from '../../engine/PlanetTextures'
 
-function createComponents(body) {
-  for (let orbitIndex = 0; orbitIndex < body.orbits.length; orbitIndex++) {
-    const orbit = body.orbits[orbitIndex]
-    const orbitId = `orbit_${orbitIndex}`
-    const orbitComponent = new OrbitComponent(
-      orbitId,
-      body.orbits[orbitIndex]
-    )
-    const transformComponent = new TransformComponent(
-      orbitId,
-      {
-        largeScalePosition: vec3.fromValues(
-          0, 0, 0
-        )
-      }
-    )
-    console.log('orbit', orbit, orbitComponent)
-    for (
-      let orbitObjectIndex = 0;
-      orbitObjectIndex < orbit.orbitObjects.length;
-      orbitObjectIndex++
-    ) {
-      const orbitObject = orbit.orbitObjects[orbitObjectIndex]
-      console.log('suborbits', orbit, orbitObject, orbitObjectIndex)
-      const orbitObjectId = `orbit_${orbitIndex}_${orbitObjectIndex}`
-      const transformComponent = new TransformComponent(
-        orbitObjectId,
-        {
-          largeScalePosition: vec3.fromValues(
-            orbitObject.x,
-            orbitObject.y,
-            orbitObject.z
-          ),
-        }
-      )
-      mat4.translate(
-        transformComponent.largeScaleMatrix,
-        transformComponent.largeScaleMatrix,
-        transformComponent.largeScalePosition
-      )
-      if (orbitObject.type === 'body') {
-        new ImposterComponent(
-          orbitObjectId,
-          orbitObject.content,
-        )
-        new PlanetComponent(
-          orbitObjectId,
-          {
-            radius: random.between(0.1, 0.6)
-          }
-        )
-        new SphereColliderComponent(
-          orbitObjectId,
-          {
-            radius: orbitObject.content.radius + 0.1
-          }
-        )
-      }
-
-      if (orbitObject.type === 'zone') {
-        new UIZoneComponent(
-          orbitObjectId
-        )
-        new ZoneComponent(
-          orbitObjectId
-        )
-        new SphereColliderComponent(
-          orbitObjectId,
-          {
-            radius: 0.1,
-          }
-        )
-      }
-
-      if (orbitObject.type === 'ring') {
-        new RingComponent(
-          orbitObjectId,
-          orbitObject.content
-        )
-      }
-
-      if (orbitObject.type === 'body') {
-        createComponents(orbitObject.content)
-      }
-    }
-  }
-}
-
+/**
+ * Esta entidad se encarga de la lógica de la generación
+ * de estrellas (y el sistema de la estrella).
+ *
+ * @param {Eleet} game
+ * @param {ConfigParams} params
+ */
 export function * Star(game, params) {
+  game.random.seed = params.seed
   const starfield = new StarfieldComponent(
     'starfield',
     new StarfieldGeometry(params.seed)
   )
-  const random  = new Random(new RandomProvider(params.seed))
 
   const starComponent = new StarComponent('star', {
-    seed: random.int(),
-    radius: random.between(1, 2)
+    seed: game.random.int(),
+    radius: game.random.between(1, 2)
   })
   const imposterStar = new ImposterComponent('star', {
     type: BodyType.STAR,
@@ -127,8 +47,7 @@ export function * Star(game, params) {
   })
 
   const dustComponent = new DustComponent('dust')
-  // createComponents(star)
-  random.seed = starComponent.seed
+  game.random.seed = starComponent.seed
   for (let orbitIndex = 0; orbitIndex < 10; orbitIndex++) {
     const minAxis = 25 * orbitIndex
     const maxAxis = 25 * (orbitIndex + 0.5)
@@ -137,15 +56,15 @@ export function * Star(game, params) {
       largeScalePosition: vec3.fromValues(0, 0, 0),
     })
     const orbitComponent = new OrbitComponent(orbitId, {
-      semiMajorAxis: random.between(minAxis, maxAxis),
-      semiMinorAxis: random.between(minAxis, maxAxis),
+      semiMajorAxis: game.random.between(minAxis, maxAxis),
+      semiMinorAxis: game.random.between(minAxis, maxAxis),
     })
     const ellipseComponent = new EllipseComponent(orbitId, {
       semiMajorAxis: orbitComponent.semiMajorAxis,
       semiMinorAxis: orbitComponent.semiMinorAxis
     })
 
-    const numOrbitBodies = random.intBetween(1, 3)
+    const numOrbitBodies = game.random.intBetween(1, 3)
     for (let orbitBodyIndex = 0; orbitBodyIndex < numOrbitBodies; orbitBodyIndex++) {
       const orbitBodyId = `orbit_${orbitIndex}_body_${orbitBodyIndex}`
       const transformComponent = new TransformComponent(orbitBodyId)
@@ -153,22 +72,37 @@ export function * Star(game, params) {
       if (orbitBodyIndex === 0) {
         const planetComponent = new PlanetComponent(orbitBodyId, {
           orbit: orbitId,
-          radius: random.between(0.1, 0.6),
-          trueAnomaly: random.angle(),
+          radius: game.random.between(0.1, 0.6),
+          trueAnomaly: game.random.angle(),
         })
+        const planetColliderComponent = new SphereColliderComponent(orbitBodyId, {
+          radius: 0.1,
+        })
+        if (planetComponent.radius > 0.5) {
+          const planetRingComponent = new PlanetRingComponent(orbitBodyId, {
+            innerRadius: planetComponent.radius + 0.5,
+            outerRadius: planetComponent.radius + 1.0
+          })
+          const ringComponent = new RingComponent(orbitBodyId, {
+            innerRadius: planetRingComponent.innerRadius,
+            outerRadius: planetRingComponent.outerRadius
+          })
+        }
         const imposterComponent = new ImposterComponent(orbitBodyId, {
           type: BodyType.PLANET,
           radius: planetComponent.radius,
-          texture: `textures/bodies/${random.pickOne(PlanetTextures)}`,
+          texture: `textures/bodies/${game.random.pickOne(PlanetTextures)}`,
         })
       } else {
         const zoneComponent = new ZoneComponent(orbitBodyId, {
           orbit: orbitId,
-          trueAnomaly: random.angle()
+          trueAnomaly: game.random.angle()
+        })
+        const zoneColliderComponent = new SphereColliderComponent(orbitBodyId, {
+          radius: 0.1,
         })
         const uiZoneComponent = new UIZoneComponent(orbitBodyId)
       }
-
     }
   }
 

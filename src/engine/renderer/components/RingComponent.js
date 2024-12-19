@@ -1,22 +1,20 @@
 import { Component } from '@taoro/component'
 
 export class RingComponent extends Component {
-  #ring = null
+  #innerRadius = 1
+  #outerRadius = 1
 
-  constructor(id, ring) {
+  constructor(id, options) {
     super(id)
-    this.#ring = ring
-  }
-
-  get ring() {
-    return this.#ring
+    this.#innerRadius = options?.innerRadius
+    this.#outerRadius = options?.outerRadius
   }
 
   get innerRadius() {
-    return this.#ring.innerRadius
+    return this.#innerRadius
   }
 
   get outerRadius() {
-    return this.#ring.outerRadius
+    return this.#outerRadius
   }
 }
