@@ -7,6 +7,8 @@ export class ColliderComponent extends Component {
 
   constructor(id, options) {
     super(id)
+    // Necesitamos hacer esto en los componentes base.
+    Component.register(this, ColliderComponent)
     this.#scale = options?.scale ?? SimulationScale.STELLAR
   }
 

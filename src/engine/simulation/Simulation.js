@@ -87,7 +87,7 @@ export class Simulation {
     this.#narrowPhase()
   }
 
-  #updateZone() {
+  #updateZones() {
     if (this.#currentZoneComponent) {
 
     }
@@ -98,19 +98,33 @@ export class Simulation {
     if (!orbitBodies)
       return
 
+    const identity = mat4.create()
     for (const orbitBody of orbitBodies) {
       const transform = Component.findByIdAndConstructor(orbitBody.id, TransformComponent)
+      if (!transform) {
+        throw new Error('Orbit body needs a transform component')
+      }
       const orbit = Component.findByIdAndConstructor(orbitBody.orbit, OrbitComponent)
+      if (!orbit) {
+        debugger
+        throw new Error('Orbit body needs a orbit component')
+      }
+
+      orbitBody.trueAnomaly += 0.000001
+
       const x = Math.cos(orbitBody.trueAnomaly) * orbit.semiMajorAxis
       const y = 0
       const z = Math.sin(orbitBody.trueAnomaly) * orbit.semiMinorAxis
-      vec3.set(transform.largeScaleMatrix, x, y, z)
+
+      vec3.set(transform.largeScalePosition, x, y, z)
+      mat4.translate(transform.largeScaleMatrix, identity, transform.largeScalePosition)
     }
   }
 
   #updateShips() {
     const ships = Component.findByConstructor(ShipComponent)
-    if (!ships) return
+    if (!ships)
+      return
 
     for (const ship of ships) {
       const transform = Component.findByIdAndConstructor(
@@ -313,7 +327,7 @@ export class Simulation {
   update() {
     this.#updateColliders()
     this.#updateOrbitBodies()
-    this.#updateZone()
+    this.#updateZones()
     this.#updateShips()
   }
 }

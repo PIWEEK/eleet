@@ -1,6 +1,6 @@
 import { Component } from '@taoro/component'
 
-export class OrbitComponent extends Component {
+export class EllipseComponent extends Component {
   #semiMajorAxis = 1
   #semiMinorAxis = 1
 

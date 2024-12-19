@@ -9,7 +9,6 @@ export class SphereColliderComponent extends ColliderComponent {
 
   constructor(id, options) {
     super(id, options)
-    Component.registerByConstructor(ColliderComponent, this)
     this.#radius = options?.radius ?? 1.0
   }
 

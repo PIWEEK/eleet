@@ -1,3 +1,4 @@
+import { Component } from '@taoro/component'
 import { BodyComponent } from './BodyComponent';
 
 export class OrbitBodyComponent extends BodyComponent {
@@ -18,13 +19,16 @@ export class OrbitBodyComponent extends BodyComponent {
    *
    * @type {number}
    */
-  #trueAnomaly = 0
+  trueAnomaly = 0
 
   constructor(id, type, options) {
     super(id, type, options)
+    // Necesitamos hacer esto en los componentes base.
+    Component.register(this, OrbitBodyComponent, id)
+
     this.#orbit = options.orbit
     this.#seed = options.seed ?? 0
-    this.#trueAnomaly = options?.trueAnomaly ?? 0
+    this.trueAnomaly = options?.trueAnomaly ?? 0
   }
 
   get seed() {
@@ -33,9 +37,5 @@ export class OrbitBodyComponent extends BodyComponent {
 
   get orbit() {
     return this.#orbit
-  }
-
-  get trueAnomaly() {
-    return this.#trueAnomaly
   }
 }

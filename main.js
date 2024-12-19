@@ -4,8 +4,7 @@ import { RandomProvider } from '@taoro/math-random-wasm'
 // import { Audio3D } from '@taoro/audio-3d'
 import { Eleet } from './src/Eleet'
 import { Player } from './src/game/entities/Player'
-import { StarSystem } from './src/game/entities/StarSystem'
-import { StellarForge } from './src/game/models/StellarForge'
+import { Star } from './src/game/entities/Star'
 
 class ConfigParams {
   #url = null
@@ -39,9 +38,7 @@ class ConfigParams {
 async function start() {
 
   const params = new ConfigParams(location)
-
   await RandomProvider.load('wasm/random.wasm')
-  const star = StellarForge.create(params.seed)
 
   const canvas = document.querySelector('canvas')
   const game = new Eleet(canvas)
@@ -78,8 +75,6 @@ async function start() {
   await game.resources.load('models/nave-comercio.blend.json')
   await game.resources.load('models/nave-mercenaria.blend.json')
 
-  // const audio3D = new Audio3D(game.audio)
-  console.log('pipeline', game.pipeline.keys())
   game.input.setBindings(0, (state) => {
     if (state.index === 0) {
       return [
@@ -173,7 +168,7 @@ async function start() {
     }
   })
 
-  game.scheduler.add(StarSystem(game, star))
+  game.scheduler.add(Star(game, params))
   game.scheduler.add(Player(game))
   game.start()
 }

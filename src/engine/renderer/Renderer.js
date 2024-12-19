@@ -7,7 +7,7 @@ import { BodyType } from '../../engine/BodyType'
 import { CameraComponent } from './components/CameraComponent'
 import { TransformComponent } from '../components/TransformComponent'
 import { StarfieldComponent } from './components/StarfieldComponent'
-import { OrbitComponent } from './components/OrbitComponent'
+import { EllipseComponent } from './components/EllipseComponent'
 import { RingComponent } from './components/RingComponent'
 import { ImposterComponent } from './components/ImposterComponent'
 import { MeshComponent } from './components/MeshComponent'
@@ -253,8 +253,12 @@ export class Renderer {
       total
     )
     gl.uniform1f(
-      gl.getUniformLocation(this.#programs.get('orbit'), 'u_radius'),
+      gl.getUniformLocation(this.#programs.get('orbit'), 'u_semiMajorAxis'),
       orbit.semiMajorAxis
+    )
+    gl.uniform1f(
+      gl.getUniformLocation(this.#programs.get('orbit'), 'u_semiMinorAxis'),
+      orbit.semiMinorAxis
     )
     gl.drawArrays(gl.LINE_LOOP, 0, total)
   }
@@ -457,7 +461,7 @@ export class Renderer {
       this.#renderStarfields(gl, camera, cameraTransform, starfields)
     }
 
-    const orbits = Component.findByConstructor(OrbitComponent)
+    const orbits = Component.findByConstructor(EllipseComponent)
     if (orbits) {
       this.#renderOrbits(gl, camera, cameraTransform, orbits)
     }

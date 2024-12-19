@@ -1,5 +1,5 @@
 import defaultProgram from './default'
-import orbitProgram from './orbit'
+import orbitProgram from './ellipse'
 import ringProgram from './ring'
 import dustProgram from './dust'
 import meshProgram from './mesh'

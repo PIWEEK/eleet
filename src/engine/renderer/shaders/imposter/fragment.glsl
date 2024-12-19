@@ -210,10 +210,9 @@ vec4 renderTexturedPlanet(vec2 pos, sampler2D text) {
   // Esta es la normal con respecto al universo.
   vec3 world_norm = (u_imposter * vec4(relative_norm, 1.0)).xyz;
   // return vec4(world_norm, 1.0);
-  vec2 tex = vec2(
-    atan(world_norm.z, world_norm.x) / TAU,
-    acos(abs(world_norm.y)) / TAU
-  );
+  float u = (atan(world_norm.z, world_norm.x) / TAU);
+  float v = (world_norm.y + 1.0) / 2.0;
+  vec2 tex = vec2(u < 0.0 ? u + 1.0 : u, v);
   float d = length(pos);
   float a = dot(-u_position, world_norm);
   if (d < 0.99) {
