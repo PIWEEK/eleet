@@ -4,7 +4,7 @@ import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-wasm'
 import { Renderer } from './engine/renderer/Renderer'
 import { TransformComponent } from './engine/components/TransformComponent'
-import { Simulation } from './engine/simulation/components/Simulation'
+import { Simulation } from './engine/simulation/Simulation'
 export class Eleet extends Game {
   #renderer = null
   #collider = null
@@ -20,7 +20,7 @@ export class Eleet extends Game {
   constructor(canvas, options) {
     super(canvas, options)
     this.#renderer = new Renderer(canvas, this.resources)
-    this.#simulation = new Simulation()
+    this.#simulation = new Simulation(this)
     this.#spatialAudio = new Audio3D(this.audio, {
       transform: TransformComponent
     })
@@ -50,6 +50,9 @@ export class Eleet extends Game {
     return this.#simulation
   }
 
+  /**
+   * @type {Audio3D}
+   */
   get spatialAudio() {
     return this.#spatialAudio
   }

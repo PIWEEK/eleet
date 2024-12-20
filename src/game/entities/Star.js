@@ -28,6 +28,11 @@ import { PlanetTextures } from '../../engine/PlanetTextures'
  */
 export function * Star(game, params) {
   game.random.seed = params.seed
+
+  game.music.a.buffer = game.resources.get('audio/music/background.wav?taoro:as=audiobuffer')
+  game.music.a.start()
+  game.music.a.fadeIn()
+
   const starfield = new StarfieldComponent(
     'starfield',
     new StarfieldGeometry(params.seed)
@@ -76,7 +81,7 @@ export function * Star(game, params) {
           trueAnomaly: game.random.angle(),
         })
         const planetColliderComponent = new SphereColliderComponent(orbitBodyId, {
-          radius: 0.1,
+          radius: planetComponent.radius + 0.1,
         })
         if (planetComponent.radius > 0.5) {
           const planetRingComponent = new PlanetRingComponent(orbitBodyId, {
@@ -99,7 +104,7 @@ export function * Star(game, params) {
           trueAnomaly: game.random.angle()
         })
         const zoneColliderComponent = new SphereColliderComponent(orbitBodyId, {
-          radius: 0.1,
+          radius: 0.01,
         })
         const uiZoneComponent = new UIZoneComponent(orbitBodyId)
       }

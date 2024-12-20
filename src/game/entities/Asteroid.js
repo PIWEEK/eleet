@@ -15,7 +15,7 @@ export const AsteroidSizeResource = {
   [AsteroidSize.BIG]: 'asteroide-grande.blend.json',
 }
 
-export function * Asteroid(game, options, sharedState) {
+export function * Asteroid(game, options) {
   const id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(36)
   const transform = new TransformComponent(`asteroid_${id}`, {
     smallScalePosition: options.smallScalePosition
@@ -38,7 +38,7 @@ export function * Asteroid(game, options, sharedState) {
     transform.smallScalePosition
   )
 
-  while (!sharedState.exit) {
+  while (true) {
     mat4.rotateX(transform.smallScaleMatrix, transform.smallScaleMatrix, 0.0001)
     yield
   }

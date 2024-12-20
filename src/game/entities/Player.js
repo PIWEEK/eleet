@@ -164,6 +164,7 @@ export function * Player(game) {
           transform.largeScalePosition
         )
 
+        collider.scale = SimulationScale.STELLAR
         ship.scale = SimulationScale.STELLAR
 
         exitUI.unregister()
@@ -177,10 +178,14 @@ export function * Player(game) {
         ship.autoPilot = true
       }
     } else {
-      exitTransform = new TransformComponent('player_exit', {
-        smallScalePosition: vec3.fromValues(0, 0, 0),
-      })
-      exitUI = new UIExitComponent('player_exit')
+      if (!exitTransform) {
+        exitTransform = new TransformComponent('player_exit', {
+          smallScalePosition: vec3.fromValues(0, 0, 0),
+        })
+      }
+      if (!exitUI) {
+        exitUI = new UIExitComponent('player_exit')
+      }
     }
 
     if (currentZoneModel !== null) {

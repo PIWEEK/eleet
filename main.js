@@ -43,6 +43,8 @@ async function start() {
   const canvas = document.querySelector('canvas')
   const game = new Eleet(canvas)
 
+  await game.resources.load('audio/music/background.wav?taoro:as=audiobuffer')
+
   await game.resources.load('images/cross.png')
   await game.resources.load('images/engine.png')
   await game.resources.load('images/front.png')

@@ -26,3 +26,5 @@ dist-ssr
 public/models/*.blend
 public/models/*.blend1
 public/models/*.blend2
+
+out

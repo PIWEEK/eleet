@@ -5,7 +5,7 @@ import { Random } from '@taoro/math-random'
 import { RandomProvider } from '@taoro/math-random-wasm'
 import { mat4 } from 'gl-matrix'
 
-export function* Station(game, options, sharedState) {
+export function* Station(game, options) {
   const random = new Random(new RandomProvider())
   const stations = ['station-big.blend.json']
   const stationModel = random.pickOne(stations)
@@ -29,7 +29,7 @@ export function* Station(game, options, sharedState) {
   const geometry = game.resources.get(`geometries/${stationModel}`)
   const mesh = new MeshComponent(`station_${id}`, geometry)
 
-  while (!sharedState.exit) {
+  while (true) {
     mat4.rotateZ(transform.smallScaleMatrix, transform.smallScaleMatrix, 0.00001)
     yield
   }

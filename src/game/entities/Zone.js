@@ -3,6 +3,7 @@ import { RandomProvider } from '@taoro/math-random-wasm'
 import { vec3 } from 'gl-matrix'
 import { Asteroid } from './Asteroid'
 import { Station } from './Station'
+import BodyType from '../../engine/BodyType'
 
 export function * Zone(game, zone) {
   // ÑAPAZA
@@ -13,27 +14,29 @@ export function * Zone(game, zone) {
   globalThis.debugRenderer.orbits = false
   globalThis.debugRenderer.ui.zones = false
 
-  const random = new Random(new RandomProvider(zone.seed ?? 0))
-  console.log(zone)
-  if (zone) {
+  game.random.seed = zone.seed
+  if (zone.type === BodyType.PLANET) {
     // Esto es la generación de la zona, que le mete unos asteroides y una Station
-    const numAsteroids = random.intBetween(50, 100)
+    const numAsteroids = game.random.intBetween(50, 100)
     console.log(numAsteroids)
     for (let index = 0; index < numAsteroids; index++) {
       game.scheduler.add(
         Asteroid(
           game,
           {
-            type: random.intBetween(0, 2),
+            type: game.random.intBetween(0, 2),
             smallScalePosition: vec3.fromValues(
-              random.between(-50, 50),
-              random.between(-50, 50),
-              random.between(-50, 50)
+              game.random.between(-50, 50),
+              game.random.between(-50, 50),
+              game.random.between(-50, 50)
             ),
           }
         )
       )
     }
+  }
+
+  if (zone.type === BodyType.ZONE) {
     game.scheduler.add(
       Station(
         game,
@@ -43,12 +46,6 @@ export function * Zone(game, zone) {
       )
     )
   }
-
-  while (true) {
-    yield
-  }
-
-  // debugger
 
   globalThis.debugRenderer.orbits = true
   globalThis.debugRenderer.ui.zones = true
