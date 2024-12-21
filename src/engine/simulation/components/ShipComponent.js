@@ -5,6 +5,18 @@ import { BodyType } from '../../BodyType'
 
 export class ShipComponent extends BodyComponent {
   /**
+   * Nave que estamos utilizando como modelo. Este modelo
+   * es el que determinará cosas como:
+   *
+   * - Capacidad de carga
+   * - Aceleración lineal
+   * - Aceleración angular
+   * - Velocidad lineal máxima
+   * - Velocidad angular máxima
+   */
+  shipModel = null
+
+  /**
    * Scale where this ship is moving.
    *
    * @type {SimulationScale}

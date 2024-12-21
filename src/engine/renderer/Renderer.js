@@ -1,8 +1,7 @@
 import { Component } from '@taoro/component'
-import WebGL from '@taoro/webgl'
+import { WebGL } from '@taoro/webgl'
 import { mat4, vec3 } from 'gl-matrix'
 import shaders from './shaders'
-import PerspectiveProjection from '../PerspectiveProjection'
 import { BodyType } from '../../engine/BodyType'
 import { CameraComponent } from './components/CameraComponent'
 import { TransformComponent } from '../components/TransformComponent'
@@ -12,10 +11,7 @@ import { RingComponent } from './components/RingComponent'
 import { ImposterComponent } from './components/ImposterComponent'
 import { MeshComponent } from './components/MeshComponent'
 import { DustComponent } from './components/DustComponent'
-import { UIZoneComponent } from './components/UIZoneComponent'
-import { UITextAnchor, UITextComponent } from './components/UITextComponent'
-import { UIImageAnchor, UIImageComponent } from './components/UIImageComponent'
-import { UIExitComponent } from './components/UIExitComponent'
+import { UIRenderer } from './UIRenderer'
 
 /**
  * Renderizador custom para el juego.
@@ -61,7 +57,7 @@ export class Renderer {
    */
   #resources
 
-  #ui = null
+  #ui = new UIRenderer()
 
   /**
    * Matrices de transformación y perspectiva
@@ -109,28 +105,18 @@ export class Renderer {
       },
     }
 
-    const gl = this.#gl = canvas.getContext('webgl2', {
+    const gl = (this.#gl = canvas.getContext('webgl2', {
       depth: true,
       stencil: false,
       antialias: true,
-    })
+    }))
 
-    const uiCanvas = new OffscreenCanvas(1920, 1080)
-    const uiContext = uiCanvas.getContext('2d', {
-      alpha: true,
-    })
     const uiTexture = this.#createTextureFromSize(
-      uiCanvas.width,
-      uiCanvas.height
+      this.#ui.width,
+      this.#ui.height
     )
 
     this.#textures.set('ui', uiTexture)
-
-    this.#ui = {
-      canvas: uiCanvas,
-      context: uiContext,
-      texture: uiTexture,
-    }
 
     for (const [name, program] of Object.entries(shaders)) {
       this.#programs.set(
@@ -227,7 +213,6 @@ export class Renderer {
    * @param {*} orbit
    */
   #renderOrbit(gl, camera, cameraTransform, orbit) {
-
     const transform = Component.findByIdAndConstructor(
       orbit.id,
       TransformComponent
@@ -243,7 +228,10 @@ export class Renderer {
     )
 
     gl.uniformMatrix4fv(
-      gl.getUniformLocation(this.#programs.get('orbit'), 'u_modelViewProjection'),
+      gl.getUniformLocation(
+        this.#programs.get('orbit'),
+        'u_modelViewProjection'
+      ),
       false,
       this.#projectionViewModel
     )
@@ -329,21 +317,50 @@ export class Renderer {
     )
     if (transform) {
       mat4.getTranslation(this.#imposterPosition, transform.largeScaleMatrix)
-      mat4.targetTo(this.#imposter, this.#viewPosition, this.#imposterPosition, this.#viewUp)
+      mat4.targetTo(
+        this.#imposter,
+        this.#viewPosition,
+        this.#imposterPosition,
+        this.#viewUp
+      )
       mat4.set(
         this.#model,
-        this.#imposter[0], this.#imposter[1], this.#imposter[2], this.#imposter[3],
-        this.#imposter[4], this.#imposter[5], this.#imposter[6], this.#imposter[7],
-        this.#imposter[8], this.#imposter[9], this.#imposter[10], this.#imposter[11],
-        this.#imposterPosition[0], this.#imposterPosition[1], this.#imposterPosition[2], 1.0,
+        this.#imposter[0],
+        this.#imposter[1],
+        this.#imposter[2],
+        this.#imposter[3],
+        this.#imposter[4],
+        this.#imposter[5],
+        this.#imposter[6],
+        this.#imposter[7],
+        this.#imposter[8],
+        this.#imposter[9],
+        this.#imposter[10],
+        this.#imposter[11],
+        this.#imposterPosition[0],
+        this.#imposterPosition[1],
+        this.#imposterPosition[2],
+        1.0
       )
 
       mat4.set(
         this.#imposterRotation,
-        this.#imposter[0], this.#imposter[1], this.#imposter[2], this.#imposter[3],
-        this.#imposter[4], this.#imposter[5], this.#imposter[6], this.#imposter[7],
-        this.#imposter[8], this.#imposter[9], this.#imposter[10], this.#imposter[11],
-        0, 0, 0, 1
+        this.#imposter[0],
+        this.#imposter[1],
+        this.#imposter[2],
+        this.#imposter[3],
+        this.#imposter[4],
+        this.#imposter[5],
+        this.#imposter[6],
+        this.#imposter[7],
+        this.#imposter[8],
+        this.#imposter[9],
+        this.#imposter[10],
+        this.#imposter[11],
+        0,
+        0,
+        0,
+        1
       )
 
       mat4.multiply(
@@ -391,7 +408,10 @@ export class Renderer {
     )
     if (imposter.type === BodyType.PLANET) {
       if (!this.#textures.has(imposter.texture)) {
-        this.#textures.set(imposter.texture, this.#createTextureFromImage(this.#resources.get(imposter.texture)))
+        this.#textures.set(
+          imposter.texture,
+          this.#createTextureFromImage(this.#resources.get(imposter.texture))
+        )
       }
       gl.activeTexture(gl.TEXTURE0)
       gl.bindTexture(gl.TEXTURE_2D, this.#textures.get(imposter.texture))
@@ -712,10 +732,7 @@ export class Renderer {
   }
 
   #computeAdditionalViewData(camera, cameraTransform) {
-    mat4.getTranslation(
-      this.#viewPosition,
-      cameraTransform.largeScaleMatrix
-    )
+    mat4.getTranslation(this.#viewPosition, cameraTransform.largeScaleMatrix)
 
     vec3.set(
       this.#viewRight,
@@ -759,273 +776,15 @@ export class Renderer {
     this.#renderIndependentScale(gl, camera, cameraTransform)
   }
 
-  #renderUIZone(gl, context, camera, cameraTransform, zone) {
-    const transform = Component.findByIdAndConstructor(
-      zone.id,
-      TransformComponent
-    )
-    if (!transform) return
-
-    mat4.identity(this.#model)
-    mat4.invert(camera.viewMatrix, cameraTransform.largeScaleMatrix)
-    mat4.multiply(
-      camera.projectionViewMatrix,
-      camera.projection.matrix,
-      camera.viewMatrix
-    )
-
-    vec3.transformMat4(
-      transform.projectedPosition,
-      transform.largeScalePosition,
-      camera.projectionViewMatrix
-    )
-
-    if (transform.projectedPosition[2] > 1) return
-
-    const x =
-      ((1 + transform.projectedPosition[0] / transform.projectedPosition[2]) /
-        2) *
-      context.canvas.width
-    const y =
-      ((1 + transform.projectedPosition[1] / -transform.projectedPosition[2]) /
-        2) *
-      context.canvas.height
-
-    context.strokeStyle = '#fff'
-    context.setLineDash([4, 4])
-    context.beginPath()
-    context.arc(x, y, 32, 0, Math.PI * 2)
-    context.stroke()
-    context.font = '16px monospace'
-    context.textAlign = 'center'
-    context.textBaseline = 'top'
-    context.fillStyle = 'white'
-    context.fillText('ZONE', x, y + 40)
-  }
-
-  #renderUIZones(gl, context, camera, cameraTransform, zones) {
-    if (!globalThis.debugRenderer.ui.zones) return
-    for (const zone of zones) {
-      this.#renderUIZone(gl, context, camera, cameraTransform, zone)
-    }
-  }
-
-  #renderUIText(gl, context, text) {
-    context.font = text.font
-    context.textAlign = text.textAlign
-    context.textBaseline = text.textBaseline
-    context.fillStyle = text.fillStyle
-    let x = text.x,
-      y = text.y
-    if (text.anchor) {
-      switch (text.anchor) {
-        case UITextAnchor.LEFT_TOP:
-          x = text.x
-          y = text.y
-          break
-
-        case UITextAnchor.RIGHT_TOP:
-          x = contet.canvas.width + text.dx
-          y = text.y
-          break
-
-        case UITextAnchor.LEFT_BOTTOM:
-          x = text.x
-          y = context.canvas.height + text.y
-          break
-
-        case UITextAnchor.RIGHT_BOTTOM:
-          x = context.canvas.width + text.x
-          y = context.canvas.height + text.y
-          break
-
-        case UITextAnchor.TOP:
-          x = contxt.canvas.width / 2 + text.dx
-          y = text.y
-          break
-
-        case UITextAnchor.BOTTOM:
-          x = context.canvas.width / 2 + ext.dx
-          y = context.canvas.height + text.y
-          break
-
-        case UITextAnchor.LEFT:
-          x = text.x
-          y = context.canvas.height / 2 + text.y
-          break
-
-        case UITextAnchor.RIGHT:
-          x = context.canvas.width + text.x
-          y = context.canvas.height / 2 + text.y
-          break
-
-        default:
-        case UITextAnchor.CENTER:
-          x = context.canvas.width / 2 + text.x
-          y = context.canvas.height / 2 + text.y
-          break
-      }
-    }
-    const lines = `${text.text}`.split('\n') ?? []
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const line = lines[lineIndex]
-      context.fillText(line, x, y + text.lineHeight * lineIndex)
-    }
-  }
-
-  #renderUITexts(gl, context, texts) {
-    if (!globalThis.debugRenderer.ui.texts) return
-    for (const text of texts) {
-      this.#renderUIText(gl, context, text)
-    }
-  }
-
-  #renderUIImage(gl, context, image) {
-    let x = 0,
-      y = 0
-    switch (image.anchor) {
-      case UIImageAnchor.LEFT_TOP:
-        x = image.dx
-        y = image.dy
-        break
-
-      case UIImageAnchor.RIGHT_TOP:
-        x = context.canvas.width - image.image.width - image.dx
-        y = image.dy
-        break
-
-      case UIImageAnchor.LEFT_BOTTOM:
-        x = image.dx
-        y = context.canvas.height - image.image.height - image.dy
-        break
-
-      case UIImageAnchor.RIGHT_BOTTOM:
-        x = context.canvas.width - image.image.width - image.dx
-        y = context.canvas.height - image.image.height - image.dy
-        break
-
-      case UIImageAnchor.TOP:
-        x = (context.canvas.width - image.image.width) / 2 + image.dx
-        y = image.dy
-        break
-
-      case UIImageAnchor.BOTTOM:
-        x = (context.canvas.width - image.image.width) / 2 + image.dx
-        y = context.canvas.height - image.image.height - image.dy
-        break
-
-      case UIImageAnchor.LEFT:
-        x = image.dx
-        y = (context.canvas.height - image.image.height) / 2 + image.dy
-        break
-
-      case UIImageAnchor.RIGHT:
-        x = context.canvas.width - image.image.width - image.dx
-        y = (context.canvas.height - image.image.height) / 2 + image.dy
-        break
-
-      default:
-      case UIImageAnchor.CENTER:
-        x = (context.canvas.width - image.image.width) / 2 + image.dx
-        y = (context.canvas.height - image.image.height) / 2 + image.dy
-        break
-    }
-
-    context.save()
-    context.drawImage(image.image, x, y)
-    context.restore()
-  }
-
-  #renderUIImages(gl, context, images) {
-    if (!globalThis.debugRenderer.ui.images) return
-    for (const image of images) {
-      this.#renderUIImage(gl, context, image)
-    }
-  }
-
-  #renderUIExit(gl, context, camera, cameraTransform, exit) {
-    const transform = Component.findByIdAndConstructor(
-      exit.id,
-      TransformComponent
-    )
-    if (!transform) return
-
-    mat4.identity(this.#model)
-    mat4.invert(camera.viewMatrix, cameraTransform.smallScaleMatrix)
-    mat4.multiply(
-      camera.projectionViewMatrix,
-      camera.projection.matrix,
-      camera.viewMatrix
-    )
-
-    vec3.transformMat4(
-      transform.projectedPosition,
-      transform.smallScalePosition,
-      camera.projectionViewMatrix
-    )
-
-    if (transform.projectedPosition[2] > 1) return
-
-    const ppx = transform.projectedPosition[0] / transform.projectedPosition[2]
-    const ppy = transform.projectedPosition[1] / -transform.projectedPosition[2]
-    if (Math.abs(ppx) < 0.01 && Math.abs(ppy < 0.01)) {
-      exit.isAligned = true
-    }
-
-    const x = ((1 + ppx) / 2) * context.canvas.width
-    const y = ((1 + ppy) / 2) * context.canvas.height
-
-    context.strokeStyle = '#fff'
-    context.setLineDash([4, 4])
-    context.beginPath()
-    context.arc(x, y, 32, 0, Math.PI * 2)
-    context.moveTo(x - 48, y)
-    context.lineTo(x + 48, y)
-    context.moveTo(x, y - 48)
-    context.lineTo(x, y + 48)
-    context.stroke()
-    context.font = '16px monospace'
-    context.textAlign = 'center'
-    context.textBaseline = 'top'
-    context.fillStyle = 'white'
-    context.fillText('ESCAPE VECTOR', x, y + 40)
-  }
-
-  #renderUIExits(gl, context, camera, cameraTransform, exits) {
-    if (!globalThis.debugRenderer.ui.exits) return
-    for (const exit of exits) {
-      this.#renderUIExit(gl, context, camera, cameraTransform, exit)
-    }
-  }
-
-  #renderUI(gl, camera, cameraTransform, context) {
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height)
-    const zones = Component.findByConstructor(UIZoneComponent)
-    if (zones) {
-      this.#renderUIZones(gl, context, camera, cameraTransform, zones)
-    }
-
-    const exits = Component.findByConstructor(UIExitComponent)
-    if (exits) {
-      this.#renderUIExits(gl, context, camera, cameraTransform, exits)
-    }
-
-    const images = Component.findByConstructor(UIImageComponent)
-    if (images) {
-      this.#renderUIImages(gl, context, images)
-    }
-
-    const texts = Component.findByConstructor(UITextComponent)
-    if (texts) {
-      this.#renderUITexts(gl, context, texts)
-    }
+  #renderUI(gl, camera, cameraTransform) {
+    this.#ui.render(camera, cameraTransform)
 
     // Pintamos todo lo que vaya en el canvas 2D.
     gl.useProgram(this.#programs.get('ui'))
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.ONE, gl.ONE)
     gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.#ui.texture)
+    gl.bindTexture(gl.TEXTURE_2D, this.#textures.get('ui'))
     gl.texSubImage2D(
       gl.TEXTURE_2D,
       0,
@@ -1062,7 +821,7 @@ export class Renderer {
         )
         this.#renderView(gl, camera, cameraTransform)
         gl.disable(gl.DEPTH_TEST)
-        this.#renderUI(gl, camera, cameraTransform, this.#ui.context)
+        this.#renderUI(gl, camera, cameraTransform)
       }
     }
   }

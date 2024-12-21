@@ -6,9 +6,9 @@ import { SphereColliderComponent } from '../../engine/simulation/components/Sphe
 
 import { TransformComponent } from '../../engine/components/TransformComponent'
 import { MeshComponent } from '../../engine/renderer/components/MeshComponent'
-import { UITextAnchor, UITextComponent } from '../../engine/renderer/components/UITextComponent'
-import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/UIImageComponent'
-import { UIExitComponent } from '../../engine/renderer/components/UIExitComponent'
+import { UITextAnchor, UITextComponent } from '../../engine/renderer/components/ui/UITextComponent'
+import { UIImageAnchor, UIImageComponent } from '../../engine/renderer/components/ui/UIImageComponent'
+import { UIExitComponent } from '../../engine/renderer/components/ui/UIExitComponent'
 import { CameraComponent } from '../../engine/renderer/components/CameraComponent'
 import { ShipComponent } from '../../engine/simulation/components/ShipComponent'
 import { SimulationScale } from '../../engine/simulation/SimulationScale'

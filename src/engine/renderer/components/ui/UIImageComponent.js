@@ -1,4 +1,4 @@
-import Component from '@taoro/component'
+import { UIComponent } from './UIComponent'
 
 export const UIImageAnchor = {
   LEFT_TOP: 0,
@@ -12,7 +12,7 @@ export const UIImageAnchor = {
   CENTER: 8,
 }
 
-export class UIImageComponent extends Component {
+export class UIImageComponent extends UIComponent {
   #image = null
 
   constructor(id, options) {

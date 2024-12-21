@@ -1,4 +1,4 @@
-import { Component } from '@taoro/component'
+import { UIComponent } from './UIComponent'
 
 export const UITextAnchor = {
   NONE: 0,
@@ -13,7 +13,7 @@ export const UITextAnchor = {
   CENTER: 9,
 }
 
-export class UITextComponent extends Component {
+export class UITextComponent extends UIComponent {
   #text = ''
   #x = 0
   #y = 0

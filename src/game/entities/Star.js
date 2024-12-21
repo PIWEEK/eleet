@@ -7,7 +7,7 @@ import { RingComponent } from '../../engine/renderer/components/RingComponent'
 import { ImposterComponent } from '../../engine/renderer/components/ImposterComponent'
 import { EllipseComponent } from '../../engine/renderer/components/EllipseComponent'
 import { StarfieldComponent } from '../../engine/renderer/components/StarfieldComponent'
-import { UIZoneComponent } from '../../engine/renderer/components/UIZoneComponent'
+import { UIZoneComponent } from '../../engine/renderer/components/ui/UIZoneComponent'
 import { SphereColliderComponent } from '../../engine/simulation/components/SphereColliderComponent'
 import { StarfieldGeometry } from '../../engine/renderer/geometries/StarfieldGeometry'
 import { ZoneComponent } from '../../engine/simulation/components/ZoneComponent'
@@ -37,7 +37,6 @@ export function * Star(game, params) {
     'starfield',
     new StarfieldGeometry(params.seed)
   )
-
   const starComponent = new StarComponent('star', {
     seed: game.random.int(),
     radius: game.random.between(1, 2)

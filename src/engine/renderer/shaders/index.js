@@ -6,7 +6,7 @@ import meshProgram from './mesh'
 import imposterProgram from './imposter'
 import uiProgram from './ui'
 
-export default {
+export const shaders = {
   default: defaultProgram,
   orbit: orbitProgram,
   ring: ringProgram,
@@ -15,3 +15,5 @@ export default {
   imposter: imposterProgram,
   ui: uiProgram,
 }
+
+export default shaders
